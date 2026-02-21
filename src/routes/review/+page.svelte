@@ -12,21 +12,36 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Tabs from '$lib/components/ui/Tabs.svelte';
 	import { noteRepo } from '$lib/db/repositories/note';
+	import { courseRepo } from '$lib/db/repositories/course';
 	import { taskRepo } from '$lib/db/repositories/task';
 	import { sessionRepo } from '$lib/db/repositories/session';
 	import { tagRepo } from '$lib/db/repositories/tag';
+	import { db } from '$lib/db';
+	import { moduleRepo } from '$lib/db/repositories/module';
 	import { getWeekRange, getMonthRange, formatDuration, formatDate } from '$lib/utils/date';
+	import { loadReflection, saveReflection, type ReviewReflectionData } from '$lib/utils/review-reflection';
 	import { isDbReady } from '$lib/stores/app.svelte';
 	import type { WeeklyReviewData, MonthlyReviewData } from '$lib/types';
 
 	let activeTab = $state('weekly');
 	let weeklyData = $state<WeeklyReviewData | null>(null);
 	let monthlyData = $state<MonthlyReviewData | null>(null);
+	let reflection = $state<ReviewReflectionData>({
+		whatClicked: '',
+		whatDidntClick: '',
+		whatToRevisit: '',
+		planForNext: ''
+	});
+	let saveTimeout: ReturnType<typeof setTimeout> | undefined;
 
 	let container: HTMLElement | undefined;
 
 	$effect(() => {
 		if (isDbReady()) loadReviewData();
+	});
+
+	$effect(() => {
+		reflection = loadReflection(activeTab === 'weekly');
 	});
 
 	$effect(() => {
@@ -75,6 +90,49 @@
 		const monthSessions = await sessionRepo.getByDateRange(monthRange.start, monthRange.end);
 		const monthTasks = await taskRepo.getByDateRange(monthRange.start, monthRange.end, 'done');
 
+		// Top courses by note count in period
+		const courseNoteCounts = new Map<number, number>();
+		for (const n of monthNotesCreated) {
+			if (n.courseId) {
+				courseNoteCounts.set(n.courseId, (courseNoteCounts.get(n.courseId) || 0) + 1);
+			}
+		}
+		const topCourseIds = Array.from(courseNoteCounts.entries())
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 5);
+		const topCourses = await Promise.all(
+			topCourseIds.map(async ([id, noteCount]) => {
+				const c = await courseRepo.getById(id);
+				return { id, title: c?.title ?? 'Unknown', noteCount };
+			})
+		);
+
+		// Most referenced notes (by backlink count)
+		const links = await db.noteLinks.toArray();
+		const backlinkCounts = new Map<number, number>();
+		for (const l of links) {
+			backlinkCounts.set(l.targetNoteId, (backlinkCounts.get(l.targetNoteId) || 0) + 1);
+		}
+		const topLinkedIds = Array.from(backlinkCounts.entries())
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 5)
+			.filter(([_, count]) => count > 0);
+		const mostReferencedNotes = await Promise.all(
+			topLinkedIds.map(async ([id, linkCount]) => {
+				const n = await noteRepo.getById(id);
+				return { id, title: n?.title ?? 'Unknown', linkCount };
+			})
+		);
+
+		// Completed modules (with course title)
+		const completedMods = await moduleRepo.getCompleted();
+		const completedModules = await Promise.all(
+			completedMods.map(async (m) => {
+				const c = await courseRepo.getById(m.courseId);
+				return { courseTitle: c?.title ?? 'Unknown', moduleTitle: m.title };
+			})
+		);
+
 		monthlyData = {
 			notesCreated: monthNotesCreated.length,
 			notesEdited: monthNotesEdited.length,
@@ -84,9 +142,9 @@
 			totalSessionMinutes: monthSessions.reduce((sum, s) => sum + (s.duration || 0), 0),
 			openQuestions: [],
 			topTags,
-			topCourses: [],
-			mostReferencedNotes: [],
-			completedModules: []
+			topCourses,
+			mostReferencedNotes,
+			completedModules
 		};
 	}
 
@@ -96,13 +154,28 @@
 	];
 
 	let data = $derived(activeTab === 'weekly' ? weeklyData : monthlyData);
+	let monthlyDataTyped = $derived(activeTab === 'monthly' ? (monthlyData as MonthlyReviewData) : null);
+
+	function scheduleSave() {
+		if (saveTimeout) clearTimeout(saveTimeout);
+		saveTimeout = setTimeout(() => {
+			saveReflection(activeTab === 'weekly', reflection);
+		}, 500);
+	}
 </script>
 
 <div bind:this={container} class="p-6 max-w-5xl mx-auto space-y-6">
 	<!-- Header -->
 	<div class="flex items-center justify-between">
 		<h1 class="text-2xl font-bold text-surface-100">Review</h1>
-		<Tabs {tabs} {activeTab} onchange={(id) => (activeTab = id)} />
+		<Tabs
+			{tabs}
+			{activeTab}
+			onchange={(id) => {
+				saveReflection(activeTab === 'weekly', reflection);
+				activeTab = id;
+			}}
+		/>
 	</div>
 
 	{#if data}
@@ -152,6 +225,51 @@
 			</div>
 		{/if}
 
+		<!-- Monthly-only: Top Courses, Most Referenced, Completed Modules -->
+		{#if monthlyDataTyped}
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+				{#if monthlyDataTyped.topCourses.length > 0}
+					<div class="rounded-xl border border-surface-800 bg-surface-900 p-5">
+						<h2 class="text-sm font-semibold text-surface-300 mb-3">Top Courses This Month</h2>
+						<ul class="space-y-2">
+							{#each monthlyDataTyped.topCourses as c}
+								<li>
+									<a href="/courses/{c.id}" class="text-sm text-brand-400 hover:text-brand-300">{c.title}</a>
+									<span class="text-xs text-surface-500"> ({c.noteCount} notes)</span>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+				{#if monthlyDataTyped.mostReferencedNotes.length > 0}
+					<div class="rounded-xl border border-surface-800 bg-surface-900 p-5">
+						<h2 class="text-sm font-semibold text-surface-300 mb-3">Most Referenced Notes</h2>
+						<ul class="space-y-2">
+							{#each monthlyDataTyped.mostReferencedNotes as n}
+								<li>
+									<a href="/note/{n.id}" class="text-sm text-brand-400 hover:text-brand-300">{n.title}</a>
+									<span class="text-xs text-surface-500"> ({n.linkCount} links)</span>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+				{#if monthlyDataTyped.completedModules.length > 0}
+					<div class="rounded-xl border border-surface-800 bg-surface-900 p-5">
+						<h2 class="text-sm font-semibold text-surface-300 mb-3">Completed Modules</h2>
+						<ul class="space-y-2">
+							{#each monthlyDataTyped.completedModules as m}
+								<li class="text-sm text-surface-400">
+									<span class="text-surface-300">{m.moduleTitle}</span>
+									<span class="text-surface-600"> — {m.courseTitle}</span>
+								</li>
+							{/each}
+						</ul>
+					</div>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- Reflection Area -->
 		<div class="rounded-xl border border-surface-800 bg-surface-900 p-5">
 			<h2 class="text-sm font-semibold text-surface-300 mb-4">Reflection</h2>
@@ -159,6 +277,9 @@
 				<div>
 					<label class="block text-xs font-medium text-surface-400 mb-1.5">What clicked this {activeTab === 'weekly' ? 'week' : 'month'}?</label>
 					<textarea
+						bind:value={reflection.whatClicked}
+						oninput={scheduleSave}
+						onblur={() => saveReflection(activeTab === 'weekly', reflection)}
 						rows={3}
 						placeholder="Write your reflections..."
 						class="w-full rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500 focus:border-brand-500 focus:outline-none resize-none"
@@ -167,6 +288,9 @@
 				<div>
 					<label class="block text-xs font-medium text-surface-400 mb-1.5">What didn't click?</label>
 					<textarea
+						bind:value={reflection.whatDidntClick}
+						oninput={scheduleSave}
+						onblur={() => saveReflection(activeTab === 'weekly', reflection)}
 						rows={3}
 						placeholder="Topics that need more work..."
 						class="w-full rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500 focus:border-brand-500 focus:outline-none resize-none"
@@ -175,6 +299,9 @@
 				<div>
 					<label class="block text-xs font-medium text-surface-400 mb-1.5">What to revisit?</label>
 					<textarea
+						bind:value={reflection.whatToRevisit}
+						oninput={scheduleSave}
+						onblur={() => saveReflection(activeTab === 'weekly', reflection)}
 						rows={3}
 						placeholder="Notes and concepts to review again..."
 						class="w-full rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500 focus:border-brand-500 focus:outline-none resize-none"
@@ -183,6 +310,9 @@
 				<div>
 					<label class="block text-xs font-medium text-surface-400 mb-1.5">Plan for next {activeTab === 'weekly' ? 'week' : 'month'}</label>
 					<textarea
+						bind:value={reflection.planForNext}
+						oninput={scheduleSave}
+						onblur={() => saveReflection(activeTab === 'weekly', reflection)}
 						rows={3}
 						placeholder="Goals and priorities..."
 						class="w-full rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500 focus:border-brand-500 focus:outline-none resize-none"

@@ -13,6 +13,7 @@
 	import {
 		getCommandPaletteState,
 		closeCommandPalette,
+		openCommandPalette,
 		setSearchQuery,
 		getFilteredCommands,
 		registerCommands
@@ -150,6 +151,7 @@
 				action: () => {
 					if (r.type === 'note') goto(`/note/${r.id}`);
 					else if (r.type === 'course') goto(`/courses/${r.id}`);
+					else if (r.type === 'tag') goto(`/library?tag=${encodeURIComponent(r.title)}`);
 					closeCommandPalette();
 				}
 			}));

@@ -18,15 +18,19 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import Dropdown from '$lib/components/ui/Dropdown.svelte';
+	import Modal from '$lib/components/ui/Modal.svelte';
+	import Input from '$lib/components/ui/Input.svelte';
+	import Select from '$lib/components/ui/Select.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import { courseRepo } from '$lib/db/repositories/course';
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { taskRepo } from '$lib/db/repositories/task';
-	import { db } from '$lib/db';
+	import { moduleRepo } from '$lib/db/repositories/module';
 	import { addToast, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo, formatDate } from '$lib/utils/date';
-	import type { Course, Note, Task, Module } from '$lib/types';
+	import { courseToMarkdown, downloadFile } from '$lib/utils/export';
+	import type { Course, Note, Task, Module, CourseType, CourseStatus, CourseProvider } from '$lib/types';
 
 	let courseId = $derived(Number(page.params.id));
 	let course = $state<Course | null>(null);
@@ -35,6 +39,13 @@
 	let tasks = $state<Task[]>([]);
 	let modules = $state<Module[]>([]);
 	let showDeleteConfirm = $state(false);
+	let showEditModal = $state(false);
+	let editTitle = $state('');
+	let editDescription = $state('');
+	let editType = $state<CourseType>('course');
+	let editStatus = $state<CourseStatus>('active');
+	let editProvider = $state<CourseProvider>('');
+	let editTags = $state('');
 
 	let container: HTMLElement | undefined;
 
@@ -58,7 +69,7 @@
 		notes = await noteRepo.getAll({ courseId: id });
 		pinnedNotes = notes.filter((n) => n.pinned);
 		tasks = await taskRepo.getAll({ courseId: id });
-		modules = await db.modules.where('courseId').equals(id).sortBy('order');
+		modules = await moduleRepo.getByCourseId(id);
 	}
 
 	async function createNote() {
@@ -74,6 +85,41 @@
 		await courseRepo.remove(courseId);
 		addToast('success', 'Course deleted');
 		goto('/courses');
+	}
+
+	function openEditModal() {
+		if (course) {
+			editTitle = course.title;
+			editDescription = course.description;
+			editType = course.type;
+			editStatus = course.status;
+			editProvider = course.provider || '';
+			editTags = course.tags.join(', ');
+			showEditModal = true;
+		}
+	}
+
+	async function saveCourseEdit() {
+		if (!course?.id) return;
+		await courseRepo.update(course.id, {
+			title: editTitle.trim(),
+			description: editDescription.trim(),
+			type: editType,
+			status: editStatus,
+			provider: editProvider || ('' as CourseProvider),
+			tags: editTags.split(',').map((t) => t.trim()).filter(Boolean)
+		});
+		await loadCourse(courseId);
+		showEditModal = false;
+		addToast('success', 'Course updated');
+	}
+
+	async function exportCourse() {
+		if (!course?.id) return;
+		const md = await courseToMarkdown(course.id);
+		const safeTitle = course.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+		await downloadFile(md, `${safeTitle}.md`, 'text/markdown');
+		addToast('success', 'Course exported');
 	}
 
 	let completedModules = $derived(modules.filter((m) => m.completed).length);
@@ -119,8 +165,8 @@
 					<Dropdown
 						align="right"
 						items={[
-							{ label: 'Edit Course', onclick: () => {} },
-							{ label: 'Export Course', onclick: () => {} },
+							{ label: 'Edit Course', onclick: openEditModal },
+							{ label: 'Export Course', onclick: exportCourse },
 							{ label: 'Delete Course', onclick: () => (showDeleteConfirm = true), variant: 'danger' }
 						]}
 					>
@@ -313,3 +359,71 @@
 	onconfirm={deleteCourse}
 	oncancel={() => (showDeleteConfirm = false)}
 />
+
+<Modal bind:open={showEditModal} title="Edit Course" size="md" onclose={() => (showEditModal = false)}>
+	<div class="space-y-4">
+		<div>
+			<label class="block text-sm font-medium text-surface-300 mb-1.5">Title</label>
+			<Input bind:value={editTitle} placeholder="Course title" onkeydown={(e) => { if (e.key === 'Enter') saveCourseEdit(); }} />
+		</div>
+		<div class="grid grid-cols-2 gap-4">
+			<div>
+				<label class="block text-sm font-medium text-surface-300 mb-1.5">Type</label>
+				<Select
+					bind:value={editType}
+					options={[
+						{ value: 'course', label: 'Course' },
+						{ value: 'topic', label: 'Topic' },
+						{ value: 'project', label: 'Project' },
+						{ value: 'certification', label: 'Certification' },
+						{ value: 'research', label: 'Research' }
+					]}
+				/>
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-surface-300 mb-1.5">Status</label>
+				<Select
+					bind:value={editStatus}
+					options={[
+						{ value: 'active', label: 'Active' },
+						{ value: 'paused', label: 'Paused' },
+						{ value: 'completed', label: 'Completed' },
+						{ value: 'archived', label: 'Archived' }
+					]}
+				/>
+			</div>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-surface-300 mb-1.5">Provider</label>
+			<Select
+				bind:value={editProvider}
+				placeholder="Select..."
+				options={[
+					{ value: '', label: 'None' },
+					{ value: 'udemy', label: 'Udemy' },
+					{ value: 'coursera', label: 'Coursera' },
+					{ value: 'youtube', label: 'YouTube' },
+					{ value: 'book', label: 'Book' },
+					{ value: 'other', label: 'Other' }
+				]}
+			/>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-surface-300 mb-1.5">Description</label>
+			<textarea
+				bind:value={editDescription}
+				placeholder="Brief description..."
+				rows={3}
+				class="w-full rounded-lg border border-surface-700 bg-surface-900 px-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500 focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500/50 resize-none"
+			></textarea>
+		</div>
+		<div>
+			<label class="block text-sm font-medium text-surface-300 mb-1.5">Tags (comma-separated)</label>
+			<Input bind:value={editTags} placeholder="e.g. typescript, frontend, react" />
+		</div>
+	</div>
+	{#snippet footer()}
+		<Button variant="ghost" onclick={() => (showEditModal = false)}>Cancel</Button>
+		<Button variant="primary" onclick={saveCourseEdit}>Save Changes</Button>
+	{/snippet}
+</Modal>

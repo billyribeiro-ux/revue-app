@@ -12,8 +12,8 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Select from '$lib/components/ui/Select.svelte';
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
-	import { db } from '$lib/db';
 	import { noteRepo } from '$lib/db/repositories/note';
+	import { inboxRepo } from '$lib/db/repositories/inbox';
 	import { courseRepo } from '$lib/db/repositories/course';
 	import { addToast, getAppState, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo } from '$lib/utils/date';
@@ -42,17 +42,16 @@
 	});
 
 	async function loadData() {
-		items = await db.inboxItems.orderBy('createdAt').reverse().toArray();
+		items = await inboxRepo.getAll();
 		courses = await courseRepo.getAll(appState.activeWorkspaceId ?? undefined);
 	}
 
 	async function quickCapture() {
 		if (!newContent.trim()) return;
-		await db.inboxItems.add({
+		await inboxRepo.create({
 			content: newContent.trim(),
 			tags: [],
-			courseId: null,
-			createdAt: Date.now()
+			courseId: null
 		});
 		newContent = '';
 		addToast('success', 'Captured to inbox');
@@ -69,13 +68,13 @@
 			workspaceId: appState.activeWorkspaceId,
 			tags: item.tags
 		});
-		await db.inboxItems.delete(item.id!);
+		await inboxRepo.remove(item.id!);
 		await loadData();
 		goto(`/note/${id}`);
 	}
 
 	async function deleteItem(id: number) {
-		await db.inboxItems.delete(id);
+		await inboxRepo.remove(id);
 		await loadData();
 		addToast('info', 'Item removed from inbox');
 	}

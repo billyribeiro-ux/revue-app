@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import gsap from 'gsap';
 	import {
 		MagnifyingGlassIcon,
@@ -10,7 +11,8 @@
 		ListIcon,
 		StarIcon,
 		PushPinIcon,
-		BookOpenIcon
+		BookOpenIcon,
+		TagIcon
 	} from 'phosphor-svelte';
 	import Button from '$lib/components/ui/Button.svelte';
 	import Badge from '$lib/components/ui/Badge.svelte';
@@ -29,8 +31,14 @@
 	let searchResults = $state<SearchResult[]>([]);
 	let filterType = $state('');
 	let filterCourse = $state('');
+	let filterTag = $state('');
 	let viewMode = $state<'grid' | 'list'>('grid');
 	let appState = $derived(getAppState());
+
+	$effect(() => {
+		const tagParam = page.url.searchParams.get('tag');
+		if (tagParam) filterTag = tagParam;
+	});
 
 	let grid: HTMLElement | undefined;
 
@@ -72,6 +80,9 @@
 		}
 		if (filterCourse) {
 			result = result.filter((n) => n.courseId === Number(filterCourse));
+		}
+		if (filterTag) {
+			result = result.filter((n) => n.tags.includes(filterTag));
 		}
 		return result;
 	});
@@ -145,6 +156,16 @@
 			]}
 			class="w-48"
 		/>
+		{#if filterTag}
+			<button
+				onclick={() => { filterTag = ''; goto('/library'); }}
+				class="flex items-center gap-1.5 rounded-lg border border-brand-600 bg-brand-500/10 px-3 py-2 text-sm text-brand-400 hover:bg-brand-500/20 transition-colors"
+			>
+				<TagIcon size={14} />
+				{filterTag}
+				<span class="text-brand-600">×</span>
+			</button>
+		{/if}
 	</div>
 
 	<!-- Search Results -->
@@ -154,13 +175,15 @@
 			<div class="space-y-2">
 				{#each searchResults as result}
 					<a
-						href={result.type === 'note' ? `/note/${result.id}` : result.type === 'course' ? `/courses/${result.id}` : '#'}
+						href={result.type === 'note' ? `/note/${result.id}` : result.type === 'course' ? `/courses/${result.id}` : result.type === 'tag' ? `/library?tag=${encodeURIComponent(result.title)}` : '#'}
 						class="flex items-center gap-3 rounded-lg border border-surface-800 bg-surface-900 px-4 py-3 hover:border-surface-600 transition-colors"
 					>
 						{#if result.type === 'note'}
 							<NoteIcon size={16} class="text-surface-500" />
 						{:else if result.type === 'course'}
 							<BookOpenIcon size={16} class="text-surface-500" />
+						{:else if result.type === 'tag'}
+							<TagIcon size={16} class="text-surface-500" />
 						{/if}
 						<div class="min-w-0 flex-1">
 							<p class="text-sm font-medium text-surface-200 truncate">{result.title}</p>

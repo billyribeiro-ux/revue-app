@@ -1,4 +1,5 @@
 import { db } from '$lib/db';
+import { indexCourse, removeCourseFromIndex } from '$lib/db/search';
 import type { Course, CourseType, CourseStatus, CourseProvider } from '$lib/types';
 
 export const courseRepo = {
@@ -34,7 +35,7 @@ export const courseRepo = {
 		tags?: string[];
 	}): Promise<number> {
 		const now = Date.now();
-		return db.courses.add({
+		const id = await db.courses.add({
 			workspaceId: data.workspaceId,
 			title: data.title,
 			type: data.type || 'course',
@@ -50,13 +51,30 @@ export const courseRepo = {
 			createdAt: now,
 			updatedAt: now
 		});
+		indexCourse({
+			id,
+			title: data.title,
+			description: data.description || '',
+			tags: data.tags || []
+		});
+		return id;
 	},
 
 	async update(id: number, data: Partial<Course>): Promise<void> {
 		await db.courses.update(id, { ...data, updatedAt: Date.now() });
+		const course = await db.courses.get(id);
+		if (course?.id) {
+			indexCourse({
+				id: course.id,
+				title: course.title,
+				description: course.description,
+				tags: course.tags
+			});
+		}
 	},
 
 	async remove(id: number): Promise<void> {
+		removeCourseFromIndex(id);
 		await db.transaction('rw', [db.courses, db.notes, db.tasks, db.sources, db.modules, db.sessions], async () => {
 			await db.notes.where('courseId').equals(id).delete();
 			await db.tasks.where('courseId').equals(id).delete();

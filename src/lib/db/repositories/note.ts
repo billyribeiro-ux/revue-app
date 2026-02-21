@@ -1,4 +1,5 @@
 import { db } from '$lib/db';
+import { removeNoteFromIndex, indexNote } from '$lib/db/search';
 import type { Note, NoteType, NoteVersion, NoteLink } from '$lib/types';
 
 function stripHtml(html: string): string {
@@ -74,7 +75,7 @@ export const noteRepo = {
 	}): Promise<number> {
 		const now = Date.now();
 		const body = data.body || '';
-		return db.notes.add({
+		const id = await db.notes.add({
 			courseId: data.courseId ?? null,
 			workspaceId: data.workspaceId ?? null,
 			title: data.title,
@@ -89,6 +90,15 @@ export const noteRepo = {
 			updatedAt: now,
 			lastEditedAt: now
 		});
+		indexNote({
+			id,
+			title: data.title,
+			bodyPlaintext: stripHtml(body),
+			noteType: data.noteType || 'general',
+			tags: data.tags || [],
+			courseId: data.courseId ?? null
+		});
+		return id;
 	},
 
 	async update(id: number, data: Partial<Note>): Promise<void> {
@@ -100,6 +110,7 @@ export const noteRepo = {
 	},
 
 	async remove(id: number): Promise<void> {
+		removeNoteFromIndex(id);
 		await db.transaction('rw', [db.notes, db.noteVersions, db.noteLinks, db.noteTagJoins, db.tasks, db.sources], async () => {
 			await db.noteVersions.where('noteId').equals(id).delete();
 			await db.noteLinks.where('sourceNoteId').equals(id).delete();

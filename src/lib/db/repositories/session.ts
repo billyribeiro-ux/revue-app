@@ -15,8 +15,8 @@ export const sessionRepo = {
 	},
 
 	async getActive(): Promise<Session | undefined> {
-		const sessions = await db.sessions.where('endTime').equals(0).toArray();
-		return sessions.find((s) => s.endTime === null || s.endTime === 0) || undefined;
+		const sessions = await db.sessions.filter((s) => s.endTime === null || s.endTime === 0).limit(1).toArray();
+		return sessions[0] ?? undefined;
 	},
 
 	async getByDateRange(start: number, end: number): Promise<Session[]> {

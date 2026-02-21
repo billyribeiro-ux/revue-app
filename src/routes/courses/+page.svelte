@@ -16,6 +16,7 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import { courseRepo } from '$lib/db/repositories/course';
+	import { db } from '$lib/db';
 	import { getAppState, addToast, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo } from '$lib/utils/date';
 	import type { Course, CourseStatus, CourseType } from '$lib/types';
@@ -66,8 +67,13 @@
 
 	async function createCourse() {
 		if (!newTitle.trim()) return;
+		let workspaceId = appState.activeWorkspaceId;
+		if (!workspaceId) {
+			const first = await db.workspaces.orderBy('createdAt').first();
+			workspaceId = first?.id ?? 1;
+		}
 		const id = await courseRepo.create({
-			workspaceId: appState.activeWorkspaceId || 1,
+			workspaceId,
 			title: newTitle.trim(),
 			type: newType,
 			provider: newProvider as any,
