@@ -34,7 +34,10 @@
 					heading: { levels: [1, 2, 3] },
 					codeBlock: {
 						HTMLAttributes: { class: 'code-block' }
-					}
+					},
+					// Disable Link and Underline—we add them below with custom config
+					link: false,
+					underline: false
 				}),
 				Placeholder.configure({ placeholder }),
 				Link.configure({
