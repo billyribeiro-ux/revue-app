@@ -12,6 +12,16 @@ let state = $state<AppState>({
 	focusMode: false
 });
 
+let dbReady = $state(false);
+
+export function isDbReady(): boolean {
+	return dbReady;
+}
+
+export function setDbReady(ready: boolean): void {
+	dbReady = ready;
+}
+
 let toasts = $state<ToastMessage[]>([]);
 
 export function getAppState(): AppState {

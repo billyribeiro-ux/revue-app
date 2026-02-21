@@ -7,7 +7,7 @@
 	import { handleKeydown, registerShortcut } from '$lib/utils/keyboard';
 	import { goto } from '$app/navigation';
 	import { openCommandPalette } from '$lib/stores/command-palette.svelte';
-	import { setActiveSession, addToast } from '$lib/stores/app.svelte';
+	import { setActiveSession, addToast, setDbReady } from '$lib/stores/app.svelte';
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { sessionRepo } from '$lib/db/repositories/session';
 
@@ -20,6 +20,7 @@
 
 	async function init() {
 		await initializeDatabase();
+		setDbReady(true);
 		await initSearchIndex();
 
 		// Register global keyboard shortcuts

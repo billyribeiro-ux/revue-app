@@ -15,7 +15,7 @@
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { taskRepo } from '$lib/db/repositories/task';
 	import { sessionRepo } from '$lib/db/repositories/session';
-	import { getAppState, setActiveSession, addToast } from '$lib/stores/app.svelte';
+	import { getAppState, setActiveSession, addToast, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo, formatDuration, getTodayRange } from '$lib/utils/date';
 	import type { Note, Task, Session } from '$lib/types';
 
@@ -28,7 +28,9 @@
 	let container: HTMLElement | undefined;
 
 	$effect(() => {
-		loadTodayData();
+		if (isDbReady()) {
+			loadTodayData();
+		}
 	});
 
 	$effect(() => {
