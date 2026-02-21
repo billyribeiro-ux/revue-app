@@ -24,7 +24,7 @@
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { taskRepo } from '$lib/db/repositories/task';
 	import { db } from '$lib/db';
-	import { addToast } from '$lib/stores/app.svelte';
+	import { addToast, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo, formatDate } from '$lib/utils/date';
 	import type { Course, Note, Task, Module } from '$lib/types';
 
@@ -39,7 +39,7 @@
 	let container: HTMLElement | undefined;
 
 	$effect(() => {
-		loadCourse(courseId);
+		if (isDbReady()) loadCourse(courseId);
 	});
 
 	$effect(() => {

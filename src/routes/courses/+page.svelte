@@ -16,7 +16,7 @@
 	import EmptyState from '$lib/components/ui/EmptyState.svelte';
 	import ProgressBar from '$lib/components/ui/ProgressBar.svelte';
 	import { courseRepo } from '$lib/db/repositories/course';
-	import { getAppState, addToast } from '$lib/stores/app.svelte';
+	import { getAppState, addToast, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo } from '$lib/utils/date';
 	import type { Course, CourseStatus, CourseType } from '$lib/types';
 
@@ -35,7 +35,7 @@
 	let grid: HTMLElement | undefined;
 
 	$effect(() => {
-		loadCourses();
+		if (isDbReady()) loadCourses();
 		// Open new modal if URL has ?new=true
 		if (page.url.searchParams.get('new') === 'true') {
 			showNewModal = true;

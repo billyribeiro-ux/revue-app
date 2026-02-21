@@ -15,7 +15,7 @@
 	import { db } from '$lib/db';
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { courseRepo } from '$lib/db/repositories/course';
-	import { addToast, getAppState } from '$lib/stores/app.svelte';
+	import { addToast, getAppState, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo } from '$lib/utils/date';
 	import { noteTemplates } from '$lib/templates';
 	import type { InboxItem, Course, NoteType } from '$lib/types';
@@ -28,7 +28,7 @@
 	let container: HTMLElement | undefined;
 
 	$effect(() => {
-		loadData();
+		if (isDbReady()) loadData();
 	});
 
 	$effect(() => {

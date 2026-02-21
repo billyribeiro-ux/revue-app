@@ -19,7 +19,7 @@
 	import { tagRepo } from '$lib/db/repositories/tag';
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { courseRepo } from '$lib/db/repositories/course';
-	import { addToast } from '$lib/stores/app.svelte';
+	import { addToast, isDbReady } from '$lib/stores/app.svelte';
 	import { getShortcuts } from '$lib/utils/keyboard';
 	import type { Tag } from '$lib/types';
 
@@ -32,7 +32,7 @@
 	let fileInput: HTMLInputElement | undefined;
 
 	$effect(() => {
-		loadData();
+		if (isDbReady()) loadData();
 	});
 
 	async function loadData() {

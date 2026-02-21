@@ -56,6 +56,10 @@ export class NotesOSDatabase extends Dexie {
 
 export const db = new NotesOSDatabase();
 
+function stripProxy<T>(value: T): T {
+	return JSON.parse(JSON.stringify(value));
+}
+
 db.use({
 	stack: 'dbcore',
 	name: 'svelte-proxy-stripper',
@@ -66,11 +70,11 @@ db.use({
 				const downlevelTable = downlevelDatabase.table(tableName);
 				return {
 					...downlevelTable,
-					mutate(req) {
+					mutate(req: any) {
 						if (req.type === 'add' || req.type === 'put') {
 							return downlevelTable.mutate({
 								...req,
-								values: req.values.map((v: unknown) => structuredClone(v))
+								values: req.values.map(stripProxy)
 							});
 						}
 						return downlevelTable.mutate(req);

@@ -16,6 +16,7 @@
 	import { sessionRepo } from '$lib/db/repositories/session';
 	import { tagRepo } from '$lib/db/repositories/tag';
 	import { getWeekRange, getMonthRange, formatDuration, formatDate } from '$lib/utils/date';
+	import { isDbReady } from '$lib/stores/app.svelte';
 	import type { WeeklyReviewData, MonthlyReviewData } from '$lib/types';
 
 	let activeTab = $state('weekly');
@@ -25,7 +26,7 @@
 	let container: HTMLElement | undefined;
 
 	$effect(() => {
-		loadReviewData();
+		if (isDbReady()) loadReviewData();
 	});
 
 	$effect(() => {

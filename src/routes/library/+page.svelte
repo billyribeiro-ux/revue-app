@@ -19,7 +19,7 @@
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { courseRepo } from '$lib/db/repositories/course';
 	import { search as searchEngine } from '$lib/db/search';
-	import { getAppState, addToast } from '$lib/stores/app.svelte';
+	import { getAppState, addToast, isDbReady } from '$lib/stores/app.svelte';
 	import { formatTimeAgo } from '$lib/utils/date';
 	import type { Note, NoteType, Course, SearchResult } from '$lib/types';
 
@@ -35,7 +35,7 @@
 	let grid: HTMLElement | undefined;
 
 	$effect(() => {
-		loadData();
+		if (isDbReady()) loadData();
 	});
 
 	$effect(() => {

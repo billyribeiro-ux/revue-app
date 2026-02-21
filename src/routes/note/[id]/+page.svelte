@@ -21,7 +21,7 @@
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { courseRepo } from '$lib/db/repositories/course';
 	import { indexNote } from '$lib/db/search';
-	import { addToast, getAppState, setActiveSession } from '$lib/stores/app.svelte';
+	import { addToast, getAppState, setActiveSession, isDbReady } from '$lib/stores/app.svelte';
 	import { sessionRepo } from '$lib/db/repositories/session';
 	import { formatTimeAgo, formatDate } from '$lib/utils/date';
 	import { noteToMarkdown, downloadFile } from '$lib/utils/export';
@@ -41,7 +41,7 @@
 	let appState = $derived(getAppState());
 
 	$effect(() => {
-		loadNote(noteId);
+		if (isDbReady()) loadNote(noteId);
 	});
 
 	async function loadNote(id: number) {
