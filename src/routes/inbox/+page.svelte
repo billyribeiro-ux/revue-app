@@ -90,6 +90,8 @@
 	<!-- Quick capture -->
 	<div class="flex gap-3">
 		<input
+			id="inbox-quick-capture"
+			name="inbox-content"
 			bind:value={newContent}
 			placeholder="Quick capture — type anything..."
 			onkeydown={(e) => { if (e.key === 'Enter') quickCapture(); }}
@@ -119,6 +121,8 @@
 						<span class="text-xs text-surface-600">{formatTimeAgo(item.createdAt)}</span>
 						<div class="flex items-center gap-2">
 							<Select
+								id="inbox-convert-{item.id}"
+								name="inbox-convert"
 								placeholder="Convert to..."
 								options={noteTemplates.map((t) => ({ value: t.type, label: t.label }))}
 								onchange={(val) => convertToNote(item, val as NoteType)}

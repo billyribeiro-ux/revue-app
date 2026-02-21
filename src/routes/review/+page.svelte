@@ -275,8 +275,10 @@
 			<h2 class="text-sm font-semibold text-surface-300 mb-4">Reflection</h2>
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
-					<label class="block text-xs font-medium text-surface-400 mb-1.5">What clicked this {activeTab === 'weekly' ? 'week' : 'month'}?</label>
+					<label for="review-what-clicked" class="block text-xs font-medium text-surface-400 mb-1.5">What clicked this {activeTab === 'weekly' ? 'week' : 'month'}?</label>
 					<textarea
+						id="review-what-clicked"
+						name="review-what-clicked"
 						bind:value={reflection.whatClicked}
 						oninput={scheduleSave}
 						onblur={() => saveReflection(activeTab === 'weekly', reflection)}
@@ -286,8 +288,10 @@
 					></textarea>
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-surface-400 mb-1.5">What didn't click?</label>
+					<label for="review-what-didnt-click" class="block text-xs font-medium text-surface-400 mb-1.5">What didn't click?</label>
 					<textarea
+						id="review-what-didnt-click"
+						name="review-what-didnt-click"
 						bind:value={reflection.whatDidntClick}
 						oninput={scheduleSave}
 						onblur={() => saveReflection(activeTab === 'weekly', reflection)}
@@ -297,8 +301,10 @@
 					></textarea>
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-surface-400 mb-1.5">What to revisit?</label>
+					<label for="review-what-to-revisit" class="block text-xs font-medium text-surface-400 mb-1.5">What to revisit?</label>
 					<textarea
+						id="review-what-to-revisit"
+						name="review-what-to-revisit"
 						bind:value={reflection.whatToRevisit}
 						oninput={scheduleSave}
 						onblur={() => saveReflection(activeTab === 'weekly', reflection)}
@@ -308,8 +314,10 @@
 					></textarea>
 				</div>
 				<div>
-					<label class="block text-xs font-medium text-surface-400 mb-1.5">Plan for next {activeTab === 'weekly' ? 'week' : 'month'}</label>
+					<label for="review-plan-next" class="block text-xs font-medium text-surface-400 mb-1.5">Plan for next {activeTab === 'weekly' ? 'week' : 'month'}</label>
 					<textarea
+						id="review-plan-next"
+						name="review-plan-next"
 						bind:value={reflection.planForNext}
 						oninput={scheduleSave}
 						onblur={() => saveReflection(activeTab === 'weekly', reflection)}

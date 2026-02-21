@@ -8,10 +8,8 @@ export default defineConfig({
 		sveltekit()
 	],
 	server: {
-		hmr: {
-			// Use 127.0.0.1 to avoid IPv6/IPv4 localhost resolution mismatches that break WebSocket
-			host: '127.0.0.1',
-			protocol: 'ws'
-		}
+		// Disable HMR WebSocket — fixes connection failures in Tauri webview and some network setups.
+		// Use full page refresh (F5) during development instead of hot reload.
+		hmr: false
 	}
 });

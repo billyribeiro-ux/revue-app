@@ -215,8 +215,10 @@
 			<div class="flex items-center gap-3 border-b border-surface-700 px-4 py-3">
 				<MagnifyingGlassIcon size={20} class="text-surface-500 shrink-0" />
 				<input
+					id="command-palette-search"
+					name="command-palette-search"
 					bind:this={input}
-					type="text"
+					type="search"
 					placeholder="Search or type a command..."
 					value={paletteState.searchQuery}
 					oninput={(e) => setSearchQuery((e.target as HTMLInputElement).value)}

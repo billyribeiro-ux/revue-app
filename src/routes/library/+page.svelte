@@ -140,14 +140,18 @@
 		<div class="relative flex-1 min-w-[240px]">
 			<MagnifyingGlassIcon size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" />
 			<input
-				type="text"
+				id="library-search"
+				name="library-search"
+				type="search"
 				placeholder="Search notes, courses, tags..."
 				bind:value={searchQuery}
 				class="w-full rounded-lg border border-surface-700 bg-surface-900 pl-9 pr-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500 focus:border-brand-500 focus:outline-none"
 			/>
 		</div>
-		<Select bind:value={filterType} options={noteTypeOptions} placeholder="All types" class="w-40" />
+		<Select id="library-filter-type" name="library-type" bind:value={filterType} options={noteTypeOptions} placeholder="All types" class="w-40" />
 		<Select
+			id="library-filter-course"
+			name="library-course"
 			bind:value={filterCourse}
 			placeholder="All courses"
 			options={[

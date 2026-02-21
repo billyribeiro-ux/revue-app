@@ -1,6 +1,7 @@
 <script lang="ts">
 	interface Props {
 		id?: string;
+		name?: string;
 		value?: string;
 		placeholder?: string;
 		type?: 'text' | 'email' | 'password' | 'number' | 'search' | 'url';
@@ -14,6 +15,7 @@
 
 	let {
 		id,
+		name,
 		value = $bindable(''),
 		placeholder = '',
 		type = 'text',
@@ -28,6 +30,7 @@
 
 <input
 	{id}
+	{name}
 	{type}
 	{placeholder}
 	{disabled}

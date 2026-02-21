@@ -227,6 +227,8 @@
 		<!-- Title -->
 		<div class="px-6 pt-6 pb-2">
 			<input
+				id="note-title"
+				name="note-title"
 				bind:this={titleInput}
 				bind:value={note.title}
 				oninput={handleTitleInput}

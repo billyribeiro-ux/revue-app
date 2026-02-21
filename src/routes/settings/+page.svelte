@@ -98,7 +98,7 @@
 	const shortcuts = getShortcuts();
 </script>
 
-<input bind:this={fileInput} type="file" accept=".json" onchange={handleFileSelected} class="hidden" />
+<input id="settings-restore-file" name="restore-file" bind:this={fileInput} type="file" accept=".json" onchange={handleFileSelected} class="hidden" />
 
 <div class="p-6 max-w-4xl mx-auto space-y-8">
 	<h1 class="text-2xl font-bold text-surface-100">Settings</h1>

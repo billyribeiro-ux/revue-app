@@ -124,13 +124,17 @@
 		<div class="relative flex-1 max-w-sm">
 			<MagnifyingGlassIcon size={16} class="absolute left-3 top-1/2 -translate-y-1/2 text-surface-500" />
 			<input
-				type="text"
+				id="courses-search"
+				name="courses-search"
+				type="search"
 				placeholder="Search courses..."
 				bind:value={searchQuery}
 				class="w-full rounded-lg border border-surface-700 bg-surface-900 pl-9 pr-3.5 py-2 text-sm text-surface-100 placeholder:text-surface-500 focus:border-brand-500 focus:outline-none"
 			/>
 		</div>
 		<Select
+			id="courses-filter-status"
+			name="courses-status"
 			bind:value={filterStatus}
 			placeholder="All statuses"
 			options={[
@@ -195,13 +199,14 @@
 	<div class="space-y-4">
 		<div>
 			<label for="new-course-title" class="block text-sm font-medium text-surface-300 mb-1.5">Title</label>
-			<Input id="new-course-title" bind:value={newTitle} placeholder="e.g., Advanced TypeScript" onkeydown={(e) => { if (e.key === 'Enter') createCourse(); }} />
+			<Input id="new-course-title" name="course-title" bind:value={newTitle} placeholder="e.g., Advanced TypeScript" onkeydown={(e) => { if (e.key === 'Enter') createCourse(); }} />
 		</div>
 		<div class="grid grid-cols-2 gap-4">
 			<div>
 				<label for="new-course-type" class="block text-sm font-medium text-surface-300 mb-1.5">Type</label>
 				<Select
 					id="new-course-type"
+					name="course-type"
 					bind:value={newType}
 					options={[
 						{ value: 'course', label: 'Course' },
@@ -216,6 +221,7 @@
 				<label for="new-course-provider" class="block text-sm font-medium text-surface-300 mb-1.5">Provider</label>
 				<Select
 					id="new-course-provider"
+					name="course-provider"
 					bind:value={newProvider}
 					placeholder="Select..."
 					options={[
@@ -233,6 +239,7 @@
 			<label for="new-course-description" class="block text-sm font-medium text-surface-300 mb-1.5">Description</label>
 			<textarea
 				id="new-course-description"
+				name="course-description"
 				bind:value={newDescription}
 				placeholder="Brief description..."
 				rows={3}

@@ -80,6 +80,8 @@
 	<!-- Workspace selector -->
 	<div class="border-b border-surface-800 p-3">
 		<select
+			id="sidebar-workspace"
+			name="active-workspace"
 			class="w-full rounded-lg border border-surface-700 bg-surface-900 px-3 py-2 text-sm text-surface-200 focus:border-brand-500 focus:outline-none"
 			value={appState.activeWorkspaceId?.toString() || ''}
 			onchange={(e) => {

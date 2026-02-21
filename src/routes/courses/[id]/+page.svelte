@@ -363,13 +363,15 @@
 <Modal bind:open={showEditModal} title="Edit Course" size="md" onclose={() => (showEditModal = false)}>
 	<div class="space-y-4">
 		<div>
-			<label class="block text-sm font-medium text-surface-300 mb-1.5">Title</label>
-			<Input bind:value={editTitle} placeholder="Course title" onkeydown={(e) => { if (e.key === 'Enter') saveCourseEdit(); }} />
+			<label for="edit-course-title" class="block text-sm font-medium text-surface-300 mb-1.5">Title</label>
+			<Input id="edit-course-title" name="edit-course-title" bind:value={editTitle} placeholder="Course title" onkeydown={(e) => { if (e.key === 'Enter') saveCourseEdit(); }} />
 		</div>
 		<div class="grid grid-cols-2 gap-4">
 			<div>
-				<label class="block text-sm font-medium text-surface-300 mb-1.5">Type</label>
+				<label for="edit-course-type" class="block text-sm font-medium text-surface-300 mb-1.5">Type</label>
 				<Select
+					id="edit-course-type"
+					name="edit-course-type"
 					bind:value={editType}
 					options={[
 						{ value: 'course', label: 'Course' },
@@ -381,8 +383,10 @@
 				/>
 			</div>
 			<div>
-				<label class="block text-sm font-medium text-surface-300 mb-1.5">Status</label>
+				<label for="edit-course-status" class="block text-sm font-medium text-surface-300 mb-1.5">Status</label>
 				<Select
+					id="edit-course-status"
+					name="edit-course-status"
 					bind:value={editStatus}
 					options={[
 						{ value: 'active', label: 'Active' },
@@ -394,8 +398,10 @@
 			</div>
 		</div>
 		<div>
-			<label class="block text-sm font-medium text-surface-300 mb-1.5">Provider</label>
+			<label for="edit-course-provider" class="block text-sm font-medium text-surface-300 mb-1.5">Provider</label>
 			<Select
+				id="edit-course-provider"
+				name="edit-course-provider"
 				bind:value={editProvider}
 				placeholder="Select..."
 				options={[
@@ -409,8 +415,10 @@
 			/>
 		</div>
 		<div>
-			<label class="block text-sm font-medium text-surface-300 mb-1.5">Description</label>
+			<label for="edit-course-description" class="block text-sm font-medium text-surface-300 mb-1.5">Description</label>
 			<textarea
+				id="edit-course-description"
+				name="edit-course-description"
 				bind:value={editDescription}
 				placeholder="Brief description..."
 				rows={3}
@@ -418,8 +426,8 @@
 			></textarea>
 		</div>
 		<div>
-			<label class="block text-sm font-medium text-surface-300 mb-1.5">Tags (comma-separated)</label>
-			<Input bind:value={editTags} placeholder="e.g. typescript, frontend, react" />
+			<label for="edit-course-tags" class="block text-sm font-medium text-surface-300 mb-1.5">Tags (comma-separated)</label>
+			<Input id="edit-course-tags" name="edit-course-tags" bind:value={editTags} placeholder="e.g. typescript, frontend, react" />
 		</div>
 	</div>
 	{#snippet footer()}
