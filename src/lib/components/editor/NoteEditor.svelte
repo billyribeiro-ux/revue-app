@@ -12,6 +12,7 @@
 	import Typography from '@tiptap/extension-typography';
 	import Underline from '@tiptap/extension-underline';
 	import EditorToolbar from './EditorToolbar.svelte';
+	import { isTauri, openExternal } from '$lib/utils/platform';
 
 	interface Props {
 		content: string;
@@ -37,7 +38,7 @@
 				}),
 				Placeholder.configure({ placeholder }),
 				Link.configure({
-					openOnClick: true,
+					openOnClick: !isTauri(),
 					HTMLAttributes: { class: 'editor-link' }
 				}),
 				Image.configure({
@@ -61,6 +62,18 @@
 			editorProps: {
 				attributes: {
 					class: 'tiptap prose prose-invert max-w-none focus:outline-none'
+				},
+				handleClick: (view, pos, event) => {
+					if (isTauri()) {
+						const target = event.target as HTMLElement;
+						const anchor = target.closest('a');
+						if (anchor?.href) {
+							event.preventDefault();
+							openExternal(anchor.href);
+							return true;
+						}
+					}
+					return false;
 				}
 			}
 		});

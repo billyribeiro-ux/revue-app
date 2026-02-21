@@ -1,5 +1,6 @@
 import { db } from '$lib/db';
 import { exportAllToJson, downloadFile } from './export';
+import { openFile } from './platform';
 
 export async function createBackup(): Promise<void> {
 	const json = await exportAllToJson();
@@ -7,9 +8,31 @@ export async function createBackup(): Promise<void> {
 	downloadFile(json, `notesos-backup-${date}.json`, 'application/json');
 }
 
+/**
+ * Open a native file dialog and restore backup from the selected file.
+ * Works in both Tauri desktop and browser environments.
+ */
+export async function restoreFromDialog(): Promise<{ success: boolean; message: string }> {
+	const text = await openFile([{ name: 'JSON Files', extensions: ['json'] }]);
+	if (!text) {
+		return { success: false, message: 'No file selected' };
+	}
+	return restoreFromBackupText(text);
+}
+
+/**
+ * Restore a backup from a File object (browser file input).
+ */
 export async function restoreFromBackup(file: File): Promise<{ success: boolean; message: string }> {
+	const text = await file.text();
+	return restoreFromBackupText(text);
+}
+
+/**
+ * Restore a backup from a JSON string.
+ */
+export async function restoreFromBackupText(text: string): Promise<{ success: boolean; message: string }> {
 	try {
-		const text = await file.text();
 		const data = JSON.parse(text);
 
 		if (!data.version || !data.exportedAt) {

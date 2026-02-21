@@ -1,6 +1,7 @@
 import TurndownService from 'turndown';
 import { db } from '$lib/db';
 import type { Note, Course } from '$lib/types';
+import { saveFile } from './platform';
 
 const turndown = new TurndownService({
 	headingStyle: 'atx',
@@ -87,14 +88,8 @@ export async function exportAllToJson(): Promise<string> {
 	return JSON.stringify(data, null, 2);
 }
 
-export function downloadFile(content: string, filename: string, mimeType: string = 'text/plain'): void {
-	const blob = new Blob([content], { type: mimeType });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement('a');
-	a.href = url;
-	a.download = filename;
-	document.body.appendChild(a);
-	a.click();
-	document.body.removeChild(a);
-	URL.revokeObjectURL(url);
+export async function downloadFile(content: string, filename: string, mimeType: string = 'text/plain'): Promise<void> {
+	const ext = filename.split('.').pop() || 'txt';
+	const filterName = ext === 'json' ? 'JSON Files' : ext === 'md' ? 'Markdown Files' : 'Text Files';
+	await saveFile(content, filename, [{ name: filterName, extensions: [ext] }]);
 }

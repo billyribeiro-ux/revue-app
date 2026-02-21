@@ -13,7 +13,8 @@
 	import Badge from '$lib/components/ui/Badge.svelte';
 	import Input from '$lib/components/ui/Input.svelte';
 	import ConfirmDialog from '$lib/components/ui/ConfirmDialog.svelte';
-	import { createBackup, restoreFromBackup } from '$lib/utils/backup';
+	import { createBackup, restoreFromBackup, restoreFromDialog } from '$lib/utils/backup';
+	import { isTauri } from '$lib/utils/platform';
 	import { exportAllToJson, downloadFile } from '$lib/utils/export';
 	import { tagRepo } from '$lib/db/repositories/tag';
 	import { noteRepo } from '$lib/db/repositories/note';
@@ -48,7 +49,18 @@
 	}
 
 	async function handleRestore() {
-		fileInput?.click();
+		if (isTauri()) {
+			// Use native file dialog in desktop mode
+			const result = await restoreFromDialog();
+			if (result.success) {
+				addToast('success', result.message);
+				await loadData();
+			} else if (result.message !== 'No file selected') {
+				addToast('error', result.message);
+			}
+		} else {
+			fileInput?.click();
+		}
 	}
 
 	async function handleFileSelected(e: Event) {
@@ -201,6 +213,6 @@
 			About
 		</h2>
 		<p class="text-sm text-surface-400">NotesOS — A professional-grade learning operating system</p>
-		<p class="text-xs text-surface-500 mt-1">Local-first. All data stored in your browser. No server required.</p>
+		<p class="text-xs text-surface-500 mt-1">Local-first. All data stored locally. Works on macOS, Windows, and the web.</p>
 	</section>
 </div>
