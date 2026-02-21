@@ -32,10 +32,13 @@
 	};
 
 	$effect(() => {
-		if (open && backdrop && panel) {
-			gsap.fromTo(backdrop, { opacity: 0 }, { opacity: 1, duration: 0.2 });
-			gsap.fromTo(panel, { opacity: 0, scale: 0.95, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.25, ease: 'back.out(1.5)' });
-		}
+		if (!open || !backdrop || !panel) return;
+		const t1 = gsap.fromTo(backdrop, { opacity: 0 }, { opacity: 1, duration: 0.2 });
+		const t2 = gsap.fromTo(panel, { opacity: 0, scale: 0.95, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.25, ease: 'back.out(1.5)' });
+		return () => {
+			t1?.kill();
+			t2?.kill();
+		};
 	});
 
 	function handleBackdropClick(e: MouseEvent) {
@@ -65,6 +68,8 @@
 				<div class="flex items-center justify-between border-b border-surface-700 px-5 py-4">
 					<h2 class="text-lg font-semibold text-surface-100">{title}</h2>
 					<button
+						type="button"
+						aria-label="Close modal"
 						onclick={onclose}
 						class="rounded-lg p-1.5 text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors"
 					>

@@ -33,7 +33,7 @@
 
 	let simNodes = $state<GraphNode[]>([]);
 	let simLinks = $state<GraphLink[]>([]);
-	let svg: SVGSVGElement | undefined;
+	let svg = $state<SVGSVGElement | undefined>();
 
 	onMount(() => {
 		if (nodes.length === 0) return;
@@ -56,12 +56,15 @@
 				simLinks = [...simLinks];
 			});
 
-		// Animate in
+		let tween: gsap.core.Tween | undefined;
 		if (svg) {
-			gsap.fromTo(svg, { opacity: 0 }, { opacity: 1, duration: 0.5 });
+			tween = gsap.fromTo(svg, { opacity: 0 }, { opacity: 1, duration: 0.5 });
 		}
 
-		return () => simulation.stop();
+		return () => {
+			tween?.kill();
+			simulation.stop();
+		};
 	});
 
 	function getNodeColor(type: string): string {

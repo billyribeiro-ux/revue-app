@@ -10,7 +10,7 @@
 
 	let { data, weeks = 12 }: Props = $props();
 
-	let container: SVGSVGElement | undefined;
+	let container = $state<SVGSVGElement | undefined>();
 
 	const cellSize = 14;
 	const cellGap = 3;
@@ -21,7 +21,7 @@
 	const height = $derived(daysInWeek * totalSize + 20);
 
 	// Build a map from date string to count
-	let countMap = $derived(() => {
+	const countMap = $derived.by(() => {
 		const map = new Map<string, number>();
 		for (const d of data) {
 			const key = d.date.toISOString().split('T')[0];
@@ -31,29 +31,27 @@
 	});
 
 	// Generate grid cells
-	let cells = $derived(() => {
+	const cells = $derived.by(() => {
 		const result: { x: number; y: number; date: Date; count: number; dateStr: string }[] = [];
 		const today = new Date();
-		const startDate = subDays(today, weeks * 7);
 
 		for (let i = 0; i < weeks * 7; i++) {
 			const date = subDays(today, weeks * 7 - 1 - i);
 			const weekIdx = Math.floor(i / 7);
 			const dayIdx = date.getDay();
 			const dateStr = date.toISOString().split('T')[0];
-			const cMap = countMap();
 			result.push({
 				x: weekIdx * totalSize,
 				y: dayIdx * totalSize,
 				date,
-				count: cMap.get(dateStr) || 0,
+				count: countMap.get(dateStr) || 0,
 				dateStr
 			});
 		}
 		return result;
 	});
 
-	let maxCount = $derived(Math.max(1, ...cells().map((c) => c.count)));
+	let maxCount = $derived(Math.max(1, ...cells.map((c) => c.count)));
 
 	function getColor(count: number): string {
 		if (count === 0) return 'var(--color-surface-800)';
@@ -65,13 +63,14 @@
 	}
 
 	$effect(() => {
-		if (container) {
-			gsap.fromTo(
-				container.querySelectorAll('rect'),
-				{ opacity: 0 },
-				{ opacity: 1, stagger: 0.002, duration: 0.3, ease: 'power2.out' }
-			);
-		}
+		if (!container) return;
+		const rects = container.querySelectorAll('rect');
+		const tween = gsap.fromTo(
+			rects,
+			{ opacity: 0 },
+			{ opacity: 1, stagger: 0.002, duration: 0.3, ease: 'power2.out' }
+		);
+		return () => tween?.kill();
 	});
 
 	const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
@@ -96,7 +95,7 @@
 
 		<!-- Cells -->
 		<g transform="translate(30, 0)">
-			{#each cells() as cell}
+			{#each cells as cell}
 				<rect
 					x={cell.x}
 					y={cell.y}

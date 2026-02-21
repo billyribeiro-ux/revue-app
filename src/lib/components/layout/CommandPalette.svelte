@@ -105,29 +105,36 @@
 	});
 
 	$effect(() => {
-		if (paletteState.isOpen && input) {
-			setTimeout(() => input?.focus(), 50);
-		}
+		if (!paletteState.isOpen || !input) return;
+		const id = setTimeout(() => input?.focus(), 50);
+		return () => clearTimeout(id);
 	});
 
 	$effect(() => {
-		if (paletteState.isOpen && panel) {
-			gsap.fromTo(panel, { opacity: 0, y: -10, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.2, ease: 'power2.out' });
-		}
+		if (!paletteState.isOpen || !panel) return;
+		const tween = gsap.fromTo(panel, { opacity: 0, y: -10, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.2, ease: 'power2.out' });
+		return () => tween?.kill();
 	});
 
 	// Search when query changes
 	$effect(() => {
-		if (paletteState.searchQuery && paletteState.searchQuery.length > 1) {
-			doSearch(paletteState.searchQuery);
-		} else {
+		const query = paletteState.searchQuery;
+		if (!query || query.length <= 1) {
 			searchResults = [];
+			return;
 		}
+		let cancelled = false;
+		search(query)
+			.then((r) => {
+				if (!cancelled) searchResults = r;
+			})
+			.catch(() => {
+				if (!cancelled) searchResults = [];
+			});
+		return () => {
+			cancelled = true;
+		};
 	});
-
-	async function doSearch(query: string) {
-		searchResults = await search(query);
-	}
 
 	async function createNewNote() {
 		const id = await noteRepo.create({ title: 'Untitled Note' });
@@ -141,7 +148,7 @@
 		closeCommandPalette();
 	}
 
-	let displayItems = $derived(() => {
+	let displayItems = $derived.by(() => {
 		if (paletteState.searchQuery && searchResults.length > 0) {
 			return searchResults.map((r) => ({
 				id: `search-${r.type}-${r.id}`,
@@ -166,7 +173,7 @@
 	});
 
 	function handleKeydown(e: KeyboardEvent) {
-		const items = displayItems();
+		const items = displayItems;
 		if (e.key === 'Escape') {
 			closeCommandPalette();
 		} else if (e.key === 'ArrowDown') {
@@ -229,7 +236,7 @@
 
 			<!-- Results -->
 			<div class="max-h-80 overflow-y-auto py-2">
-				{#each displayItems() as item, i}
+				{#each displayItems as item, i}
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
 						class="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors
@@ -244,7 +251,7 @@
 						<span class="text-xs text-surface-600 capitalize shrink-0">{item.category}</span>
 					</div>
 				{/each}
-				{#if displayItems().length === 0}
+				{#if displayItems.length === 0}
 					<div class="px-4 py-8 text-center text-sm text-surface-500">
 						No results found
 					</div>

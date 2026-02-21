@@ -20,13 +20,13 @@
 	const offset = $derived(circumference * (1 - pct));
 
 	$effect(() => {
-		if (circle) {
-			gsap.fromTo(
-				circle,
-				{ strokeDashoffset: circumference },
-				{ strokeDashoffset: offset, duration: 1.2, ease: 'power2.out' }
-			);
-		}
+		if (!circle) return;
+		const tween = gsap.fromTo(
+			circle,
+			{ strokeDashoffset: circumference },
+			{ strokeDashoffset: offset, duration: 1.2, ease: 'power2.out' }
+		);
+		return () => tween?.kill();
 	});
 </script>
 

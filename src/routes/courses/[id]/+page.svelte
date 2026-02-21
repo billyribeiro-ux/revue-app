@@ -50,17 +50,21 @@
 	let container = $state<HTMLElement | undefined>();
 
 	$effect(() => {
-		if (isDbReady()) loadCourse(courseId);
+		if (isDbReady()) {
+			loadCourse(courseId).catch((err) => {
+				console.error('Failed to load course:', err);
+			});
+		}
 	});
 
 	$effect(() => {
-		if (container) {
-			gsap.fromTo(
-				container.children,
-				{ opacity: 0, y: 15 },
-				{ opacity: 1, y: 0, stagger: 0.04, duration: 0.3, ease: 'power2.out' }
-			);
-		}
+		if (!container) return;
+		const tween = gsap.fromTo(
+			container.children,
+			{ opacity: 0, y: 15 },
+			{ opacity: 1, y: 0, stagger: 0.04, duration: 0.3, ease: 'power2.out' }
+		);
+		return () => tween?.kill();
 	});
 
 	async function loadCourse(id: number) {
@@ -171,7 +175,7 @@
 						]}
 					>
 						{#snippet trigger()}
-							<button class="rounded-lg p-2 text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors">
+							<button aria-label="Course options" type="button" class="rounded-lg p-2 text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors">
 								<DotsThreeIcon size={20} weight="bold" />
 							</button>
 						{/snippet}

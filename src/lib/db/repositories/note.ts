@@ -107,6 +107,18 @@ export const noteRepo = {
 			updates.bodyPlaintext = stripHtml(data.body);
 		}
 		await db.notes.update(id, updates);
+		// Sync search index when title, body, or tags change
+		const note = await db.notes.get(id);
+		if (note && (data.title !== undefined || data.body !== undefined || data.tags !== undefined)) {
+			indexNote({
+				id: note.id!,
+				title: note.title,
+				bodyPlaintext: note.bodyPlaintext,
+				noteType: note.noteType,
+				tags: note.tags,
+				courseId: note.courseId
+			});
+		}
 	},
 
 	async remove(id: number): Promise<void> {

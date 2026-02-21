@@ -34,10 +34,14 @@
 	});
 	let saveTimeout: ReturnType<typeof setTimeout> | undefined;
 
-	let container: HTMLElement | undefined;
+	let container = $state<HTMLElement | undefined>();
 
 	$effect(() => {
-		if (isDbReady()) loadReviewData();
+		if (isDbReady()) {
+			loadReviewData().catch((err) => {
+				console.error('Failed to load review data:', err);
+			});
+		}
 	});
 
 	$effect(() => {
@@ -45,13 +49,17 @@
 	});
 
 	$effect(() => {
-		if (container) {
-			gsap.fromTo(
-				container.children,
-				{ opacity: 0, y: 15 },
-				{ opacity: 1, y: 0, stagger: 0.04, duration: 0.3, ease: 'power2.out' }
-			);
-		}
+		if (!container) return;
+		const tween = gsap.fromTo(
+			container.children,
+			{ opacity: 0, y: 15 },
+			{ opacity: 1, y: 0, stagger: 0.04, duration: 0.3, ease: 'power2.out' }
+		);
+		return () => tween?.kill();
+	});
+
+	$effect(() => () => {
+		if (saveTimeout) clearTimeout(saveTimeout);
 	});
 
 	async function loadReviewData() {

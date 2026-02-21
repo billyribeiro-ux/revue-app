@@ -54,8 +54,10 @@
 		editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 	}
 
+	import type { Component } from 'svelte';
+
 	interface ToolbarButton {
-		icon: any;
+		icon: Component<Record<string, unknown>>;
 		label: string;
 		action: () => void;
 		isActive?: () => boolean;

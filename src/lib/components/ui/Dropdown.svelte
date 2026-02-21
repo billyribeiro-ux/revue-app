@@ -22,9 +22,9 @@
 	let menu = $state<HTMLElement | undefined>(undefined);
 
 	$effect(() => {
-		if (open && menu) {
-			gsap.fromTo(menu, { opacity: 0, y: -4 }, { opacity: 1, y: 0, duration: 0.15 });
-		}
+		if (!open || !menu) return;
+		const tween = gsap.fromTo(menu, { opacity: 0, y: -4 }, { opacity: 1, y: 0, duration: 0.15 });
+		return () => tween?.kill();
 	});
 
 	function handleClickOutside(e: MouseEvent) {
@@ -39,12 +39,14 @@
 <div class="relative inline-block">
 	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 	<div onclick={(e) => { e.stopPropagation(); open = !open; }}>
 		{@render trigger()}
 	</div>
 
 	{#if open}
 		<div
+			id="dropdown-menu"
 			role="menu"
 			tabindex="-1"
 			bind:this={menu}
@@ -54,6 +56,8 @@
 		>
 			{#each items as item}
 				<button
+					type="button"
+					role="menuitem"
 					onclick={() => { item.onclick(); open = false; }}
 					disabled={item.disabled}
 					class="w-full px-3 py-2 text-left text-sm transition-colors

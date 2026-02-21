@@ -20,7 +20,6 @@
 	import NoteEditor from '$lib/components/editor/NoteEditor.svelte';
 	import { noteRepo } from '$lib/db/repositories/note';
 	import { courseRepo } from '$lib/db/repositories/course';
-	import { indexNote } from '$lib/db/search';
 	import { addToast, getAppState, setActiveSession, isDbReady } from '$lib/stores/app.svelte';
 	import { sessionRepo } from '$lib/db/repositories/session';
 	import { formatTimeAgo, formatDate } from '$lib/utils/date';
@@ -41,7 +40,11 @@
 	let appState = $derived(getAppState());
 
 	$effect(() => {
-		if (isDbReady()) loadNote(noteId);
+		if (isDbReady()) {
+			loadNote(noteId).catch((err) => {
+				console.error('Failed to load note:', err);
+			});
+		}
 	});
 
 	async function loadNote(id: number) {
@@ -57,38 +60,35 @@
 	async function saveNote() {
 		if (!note?.id) return;
 		saving = true;
-		await noteRepo.update(note.id, {
-			title: note.title,
-			body: note.body,
-			tags: note.tags
-		});
-
-		// Update search index
-		const updated = await noteRepo.getById(note.id);
-		if (updated) {
-			indexNote({
-				id: updated.id!,
-				title: updated.title,
-				bodyPlaintext: updated.bodyPlaintext,
-				noteType: updated.noteType,
-				tags: updated.tags,
-				courseId: updated.courseId
+		try {
+			await noteRepo.update(note.id, {
+				title: note.title,
+				body: note.body,
+				tags: note.tags
 			});
-		}
 
-		// Track in active session
-		if (appState.activeSessionId) {
-			await sessionRepo.addLinkedNote(appState.activeSessionId, note.id);
-		}
+			// Track in active session
+			if (appState.activeSessionId) {
+				await sessionRepo.addLinkedNote(appState.activeSessionId, note.id);
+			}
 
-		lastSaved = Date.now();
-		saving = false;
+			lastSaved = Date.now();
+		} catch (err) {
+			console.error('Failed to save note:', err);
+			addToast('error', 'Failed to save note');
+		} finally {
+			saving = false;
+		}
 	}
 
 	function debouncedSave() {
 		if (saveTimeout) clearTimeout(saveTimeout);
 		saveTimeout = setTimeout(saveNote, 1000);
 	}
+
+	$effect(() => () => {
+		if (saveTimeout) clearTimeout(saveTimeout);
+	});
 
 	function handleBodyUpdate(html: string) {
 		if (note) {
@@ -192,6 +192,7 @@
 				</span>
 
 				<button
+					aria-label={note.favorited ? 'Remove from favorites' : 'Add to favorites'}
 					onclick={toggleFavorite}
 					class="rounded-lg p-2 transition-colors {note.favorited ? 'text-accent-yellow' : 'text-surface-400 hover:text-surface-200'} hover:bg-surface-800"
 					title="Favorite"
@@ -199,6 +200,7 @@
 					<StarIcon size={16} weight={note.favorited ? 'fill' : 'regular'} />
 				</button>
 				<button
+					aria-label={note.pinned ? 'Unpin note' : 'Pin note'}
 					onclick={togglePin}
 					class="rounded-lg p-2 transition-colors {note.pinned ? 'text-brand-400' : 'text-surface-400 hover:text-surface-200'} hover:bg-surface-800"
 					title="Pin"
@@ -216,7 +218,7 @@
 					]}
 				>
 					{#snippet trigger()}
-						<button class="rounded-lg p-2 text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors">
+						<button aria-label="More options" type="button" class="rounded-lg p-2 text-surface-400 hover:bg-surface-800 hover:text-surface-200 transition-colors">
 							<DotsThreeIcon size={18} weight="bold" />
 						</button>
 					{/snippet}

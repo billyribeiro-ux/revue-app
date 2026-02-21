@@ -76,7 +76,7 @@
 			workspaceId,
 			title: newTitle.trim(),
 			type: newType,
-			provider: newProvider as any,
+			provider: (newProvider || '') as import('$lib/types').CourseProvider,
 			description: newDescription
 		});
 		addToast('success', `Course "${newTitle}" created`);

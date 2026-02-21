@@ -43,17 +43,21 @@
 	let grid = $state<HTMLElement | undefined>();
 
 	$effect(() => {
-		if (isDbReady()) loadData();
+		if (isDbReady()) {
+			loadData().catch((err) => {
+				console.error('Failed to load library data:', err);
+			});
+		}
 	});
 
 	$effect(() => {
-		if (grid) {
-			gsap.fromTo(
-				grid.children,
-				{ opacity: 0, y: 10 },
-				{ opacity: 1, y: 0, stagger: 0.02, duration: 0.3, ease: 'power2.out' }
-			);
-		}
+		if (!grid) return;
+		const tween = gsap.fromTo(
+			grid.children,
+			{ opacity: 0, y: 10 },
+			{ opacity: 1, y: 0, stagger: 0.02, duration: 0.3, ease: 'power2.out' }
+		);
+		return () => tween?.kill();
 	});
 
 	async function loadData() {
@@ -62,18 +66,23 @@
 	}
 
 	$effect(() => {
-		if (searchQuery.length > 1) {
-			performSearch(searchQuery);
-		} else {
+		const query = searchQuery;
+		if (query.length <= 1) {
 			searchResults = [];
+			return;
 		}
+		let cancelled = false;
+		searchEngine(query, 30)
+			.then((r) => {
+				if (!cancelled) searchResults = r;
+			})
+			.catch(() => {
+				if (!cancelled) searchResults = [];
+			});
+		return () => { cancelled = true; };
 	});
 
-	async function performSearch(query: string) {
-		searchResults = await searchEngine(query, 30);
-	}
-
-	let filteredNotes = $derived(() => {
+	let filteredNotes = $derived.by(() => {
 		let result = notes;
 		if (filterType) {
 			result = result.filter((n) => n.noteType === filterType);
@@ -201,10 +210,10 @@
 	{/if}
 
 	<!-- Notes Display -->
-	{#if filteredNotes().length > 0}
+	{#if filteredNotes.length > 0}
 		{#if viewMode === 'grid'}
 			<div bind:this={grid} class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-				{#each filteredNotes() as note}
+				{#each filteredNotes as note}
 					<a
 						href="/note/{note.id}"
 						class="rounded-xl border border-surface-800 bg-surface-900 p-4 hover:border-surface-600 transition-colors group"
@@ -235,7 +244,7 @@
 			</div>
 		{:else}
 			<div bind:this={grid} class="space-y-2">
-				{#each filteredNotes() as note}
+				{#each filteredNotes as note}
 					<a
 						href="/note/{note.id}"
 						class="flex items-center gap-4 rounded-lg border border-surface-800 bg-surface-900 px-4 py-3 hover:border-surface-600 transition-colors group"

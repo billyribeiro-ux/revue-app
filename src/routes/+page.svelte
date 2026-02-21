@@ -25,22 +25,24 @@
 	let todaySessions = $state<Session[]>([]);
 	let appState = $derived(getAppState());
 
-	let container: HTMLElement | undefined;
+	let container = $state<HTMLElement | undefined>();
 
 	$effect(() => {
 		if (isDbReady()) {
-			loadTodayData();
+			loadTodayData().catch((err) => {
+				console.error('Failed to load today data:', err);
+			});
 		}
 	});
 
 	$effect(() => {
-		if (container) {
-			gsap.fromTo(
-				container.children,
-				{ opacity: 0, y: 20 },
-				{ opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: 'power2.out' }
-			);
-		}
+		if (!container) return;
+		const tween = gsap.fromTo(
+			container.children,
+			{ opacity: 0, y: 20 },
+			{ opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: 'power2.out' }
+		);
+		return () => tween?.kill();
 	});
 
 	async function loadTodayData() {

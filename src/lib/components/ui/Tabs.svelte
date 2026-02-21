@@ -1,8 +1,10 @@
 <script lang="ts">
+	import type { Component } from 'svelte';
+
 	interface Tab {
 		id: string;
 		label: string;
-		icon?: any;
+		icon?: Component<Record<string, unknown>>;
 	}
 
 	interface Props {

@@ -1,4 +1,4 @@
-import Dexie, { type Table } from 'dexie';
+import Dexie, { type Table, type DBCoreMutateRequest } from 'dexie';
 import type {
 	Workspace,
 	Course,
@@ -70,7 +70,7 @@ db.use({
 				const downlevelTable = downlevelDatabase.table(tableName);
 				return {
 					...downlevelTable,
-					mutate(req: any) {
+					mutate(req: DBCoreMutateRequest) {
 						if (req.type === 'add' || req.type === 'put') {
 							return downlevelTable.mutate({
 								...req,
