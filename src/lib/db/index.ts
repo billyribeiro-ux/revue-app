@@ -56,6 +56,31 @@ export class NotesOSDatabase extends Dexie {
 
 export const db = new NotesOSDatabase();
 
+db.use({
+	stack: 'dbcore',
+	name: 'svelte-proxy-stripper',
+	create(downlevelDatabase) {
+		return {
+			...downlevelDatabase,
+			table(tableName) {
+				const downlevelTable = downlevelDatabase.table(tableName);
+				return {
+					...downlevelTable,
+					mutate(req) {
+						if (req.type === 'add' || req.type === 'put') {
+							return downlevelTable.mutate({
+								...req,
+								values: req.values.map((v: unknown) => structuredClone(v))
+							});
+						}
+						return downlevelTable.mutate(req);
+					}
+				};
+			}
+		};
+	}
+});
+
 // Seed default workspace if none exists
 export async function initializeDatabase(): Promise<void> {
 	const count = await db.workspaces.count();
