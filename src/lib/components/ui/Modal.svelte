@@ -21,8 +21,8 @@
 		footer
 	}: Props = $props();
 
-	let backdrop: HTMLElement | undefined;
-	let panel: HTMLElement | undefined;
+	let backdrop = $state<HTMLElement | undefined>(undefined);
+	let panel = $state<HTMLElement | undefined>(undefined);
 
 	const sizeClasses = {
 		sm: 'max-w-sm',

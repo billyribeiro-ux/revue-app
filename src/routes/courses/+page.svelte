@@ -33,7 +33,7 @@
 	let newProvider = $state('');
 	let newDescription = $state('');
 
-	let grid: HTMLElement | undefined;
+	let grid = $state<HTMLElement | undefined>(undefined);
 
 	$effect(() => {
 		if (isDbReady()) loadCourses();
@@ -194,13 +194,14 @@
 <Modal bind:open={showNewModal} title="New Course" size="md" onclose={() => (showNewModal = false)}>
 	<div class="space-y-4">
 		<div>
-			<label class="block text-sm font-medium text-surface-300 mb-1.5">Title</label>
-			<Input bind:value={newTitle} placeholder="e.g., Advanced TypeScript" onkeydown={(e) => { if (e.key === 'Enter') createCourse(); }} />
+			<label for="new-course-title" class="block text-sm font-medium text-surface-300 mb-1.5">Title</label>
+			<Input id="new-course-title" bind:value={newTitle} placeholder="e.g., Advanced TypeScript" onkeydown={(e) => { if (e.key === 'Enter') createCourse(); }} />
 		</div>
 		<div class="grid grid-cols-2 gap-4">
 			<div>
-				<label class="block text-sm font-medium text-surface-300 mb-1.5">Type</label>
+				<label for="new-course-type" class="block text-sm font-medium text-surface-300 mb-1.5">Type</label>
 				<Select
+					id="new-course-type"
 					bind:value={newType}
 					options={[
 						{ value: 'course', label: 'Course' },
@@ -212,8 +213,9 @@
 				/>
 			</div>
 			<div>
-				<label class="block text-sm font-medium text-surface-300 mb-1.5">Provider</label>
+				<label for="new-course-provider" class="block text-sm font-medium text-surface-300 mb-1.5">Provider</label>
 				<Select
+					id="new-course-provider"
 					bind:value={newProvider}
 					placeholder="Select..."
 					options={[
@@ -228,8 +230,9 @@
 			</div>
 		</div>
 		<div>
-			<label class="block text-sm font-medium text-surface-300 mb-1.5">Description</label>
+			<label for="new-course-description" class="block text-sm font-medium text-surface-300 mb-1.5">Description</label>
 			<textarea
+				id="new-course-description"
 				bind:value={newDescription}
 				placeholder="Brief description..."
 				rows={3}

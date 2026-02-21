@@ -5,6 +5,7 @@
 	}
 
 	interface Props {
+		id?: string;
 		value?: string;
 		options: Option[];
 		placeholder?: string;
@@ -14,6 +15,7 @@
 	}
 
 	let {
+		id,
 		value = $bindable(''),
 		options,
 		placeholder = 'Select...',
@@ -30,6 +32,7 @@
 </script>
 
 <select
+	{id}
 	{disabled}
 	{value}
 	onchange={handleChange}
