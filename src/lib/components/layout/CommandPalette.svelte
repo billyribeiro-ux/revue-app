@@ -27,8 +27,8 @@
 	import gsap from 'gsap';
 
 	let paletteState = $derived(getCommandPaletteState());
-	let input: HTMLInputElement | undefined;
-	let panel: HTMLElement | undefined;
+	let input = $state<HTMLInputElement | undefined>(undefined);
+	let panel = $state<HTMLElement | undefined>(undefined);
 	let selectedIndex = $state(0);
 	let searchResults = $state<SearchResult[]>([]);
 

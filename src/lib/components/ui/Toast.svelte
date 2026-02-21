@@ -31,10 +31,11 @@
 
 <div class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
 	{#each toasts as toast (toast.id)}
+		{@const ToastIcon = iconMap[toast.type]}
 		<div
 			class="flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-sm {colorMap[toast.type]}"
 		>
-			<svelte:component this={iconMap[toast.type]} size={20} class={textColorMap[toast.type]} weight="fill" />
+			<ToastIcon size={20} class={textColorMap[toast.type]} weight="fill" />
 			<span class="text-sm text-surface-200">{toast.message}</span>
 			<button
 				onclick={() => removeToast(toast.id)}

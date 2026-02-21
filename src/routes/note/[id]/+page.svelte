@@ -33,7 +33,7 @@
 	let versions = $state<NoteVersion[]>([]);
 	let showDeleteConfirm = $state(false);
 	let showVersions = $state(false);
-	let titleInput: HTMLInputElement | undefined;
+	let titleInput = $state<HTMLInputElement | undefined>(undefined);
 	let saveTimeout: ReturnType<typeof setTimeout> | undefined;
 	let lastSaved = $state<number>(0);
 	let saving = $state(false);

@@ -47,7 +47,7 @@
 	let editProvider = $state<CourseProvider>('');
 	let editTags = $state('');
 
-	let container: HTMLElement | undefined;
+	let container = $state<HTMLElement | undefined>();
 
 	$effect(() => {
 		if (isDbReady()) loadCourse(courseId);
@@ -311,6 +311,7 @@
 							{#each openTasks.slice(0, 5) as task}
 								<div class="flex items-center gap-2 text-sm">
 									<button
+										aria-label="Mark task as complete"
 										onclick={async () => {
 											await taskRepo.updateStatus(task.id!, 'done');
 											await loadCourse(courseId);

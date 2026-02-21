@@ -164,13 +164,14 @@
 <div class="flex flex-wrap items-center gap-0.5 border-b border-surface-700 pb-2 mb-2">
 	<!-- Headings -->
 	{#each headingButtons as btn}
+		{@const BtnIcon = btn.icon}
 		<button
 			onclick={btn.action}
 			class="rounded p-1.5 transition-colors
 				{btn.isActive?.() ? 'bg-surface-700 text-surface-100' : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200'}"
 			title={btn.label}
 		>
-			<svelte:component this={btn.icon} size={16} />
+			<BtnIcon size={16} />
 		</button>
 	{/each}
 
@@ -178,13 +179,14 @@
 
 	<!-- Formatting -->
 	{#each formatButtons as btn}
+		{@const BtnIcon = btn.icon}
 		<button
 			onclick={btn.action}
 			class="rounded p-1.5 transition-colors
 				{btn.isActive?.() ? 'bg-surface-700 text-surface-100' : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200'}"
 			title={btn.label}
 		>
-			<svelte:component this={btn.icon} size={16} />
+			<BtnIcon size={16} />
 		</button>
 	{/each}
 
@@ -192,13 +194,14 @@
 
 	<!-- Block elements -->
 	{#each blockButtons as btn}
+		{@const BtnIcon = btn.icon}
 		<button
 			onclick={btn.action}
 			class="rounded p-1.5 transition-colors
 				{btn.isActive?.() ? 'bg-surface-700 text-surface-100' : 'text-surface-400 hover:bg-surface-800 hover:text-surface-200'}"
 			title={btn.label}
 		>
-			<svelte:component this={btn.icon} size={16} />
+			<BtnIcon size={16} />
 		</button>
 	{/each}
 

@@ -98,7 +98,8 @@
 	<!-- Navigation -->
 	<nav class="flex-1 overflow-y-auto p-2">
 		<div class="space-y-0.5">
-			{#each navItems as item}
+		{#each navItems as item}
+				{@const NavIcon = item.icon}
 				<a
 					href={item.href}
 					class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors
@@ -106,7 +107,7 @@
 							? 'bg-surface-800 text-surface-100 font-medium'
 							: 'text-surface-400 hover:bg-surface-800/50 hover:text-surface-200'}"
 				>
-					<svelte:component this={item.icon} size={18} weight={isActive(item.href) ? 'fill' : 'regular'} />
+					<NavIcon size={18} weight={isActive(item.href) ? 'fill' : 'regular'} />
 					{item.label}
 				</a>
 			{/each}

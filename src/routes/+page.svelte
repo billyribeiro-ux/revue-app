@@ -165,6 +165,7 @@
 					{#each openTasks.slice(0, 8) as task}
 						<div class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm hover:bg-surface-800 transition-colors">
 							<button
+								aria-label="Mark task as complete"
 								onclick={async () => {
 									await taskRepo.updateStatus(task.id!, 'done');
 									await loadTodayData();

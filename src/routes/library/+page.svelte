@@ -40,7 +40,7 @@
 		if (tagParam) filterTag = tagParam;
 	});
 
-	let grid: HTMLElement | undefined;
+	let grid = $state<HTMLElement | undefined>();
 
 	$effect(() => {
 		if (isDbReady()) loadData();

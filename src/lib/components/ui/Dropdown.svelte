@@ -19,7 +19,7 @@
 	let { items, align = 'left', trigger }: Props = $props();
 
 	let open = $state(false);
-	let menu: HTMLElement | undefined;
+	let menu = $state<HTMLElement | undefined>(undefined);
 
 	$effect(() => {
 		if (open && menu) {
@@ -45,9 +45,12 @@
 
 	{#if open}
 		<div
+			role="menu"
+			tabindex="-1"
 			bind:this={menu}
 			class="absolute z-40 mt-1 min-w-[180px] rounded-lg border border-surface-700 bg-surface-900 py-1 shadow-xl {align === 'right' ? 'right-0' : 'left-0'}"
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => { if (e.key === 'Escape') open = false; }}
 		>
 			{#each items as item}
 				<button

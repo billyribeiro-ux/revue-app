@@ -35,20 +35,34 @@
 	};
 </script>
 
-<span
-	class="inline-flex items-center gap-1 rounded-md border font-medium {variantClasses[variant]} {sizeClasses[size]} {onclick ? 'cursor-pointer hover:opacity-80' : ''} {className}"
-	role={onclick ? 'button' : undefined}
-	tabindex={onclick ? 0 : undefined}
-	onclick={onclick}
-	onkeydown={onclick ? (e) => { if (e.key === 'Enter') onclick?.() } : undefined}
->
-	{label}
-	{#if removable && onremove}
-		<button
-			onclick={(e) => { e.stopPropagation(); onremove?.(); }}
-			class="ml-0.5 rounded-sm hover:bg-white/10 p-0.5 leading-none"
-		>
-			&times;
+{#if onclick}
+	<div class="inline-flex items-center gap-1 rounded-md border font-medium {variantClasses[variant]} {sizeClasses[size]} cursor-pointer hover:opacity-80 {className}" role="group">
+		<button type="button" class="flex-1 min-w-0 text-left border-0 bg-transparent p-0 m-0 font-inherit cursor-pointer" onclick={onclick}>
+			{label}
 		</button>
-	{/if}
-</span>
+		{#if removable && onremove}
+			<button
+				type="button"
+				onclick={(e) => { e.stopPropagation(); onremove?.(); }}
+				class="ml-0.5 rounded-sm hover:bg-white/10 p-0.5 leading-none border-0 bg-transparent cursor-pointer"
+				aria-label="Remove"
+			>
+				&times;
+			</button>
+		{/if}
+	</div>
+{:else}
+	<span class="inline-flex items-center gap-1 rounded-md border font-medium {variantClasses[variant]} {sizeClasses[size]} {className}">
+		{label}
+		{#if removable && onremove}
+			<button
+				type="button"
+				onclick={(e) => { e.stopPropagation(); onremove?.(); }}
+				class="ml-0.5 rounded-sm hover:bg-white/10 p-0.5 leading-none border-0 bg-transparent cursor-pointer"
+				aria-label="Remove"
+			>
+				&times;
+			</button>
+		{/if}
+	</span>
+{/if}

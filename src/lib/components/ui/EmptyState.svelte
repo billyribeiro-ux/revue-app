@@ -13,7 +13,8 @@
 
 <div class="flex flex-col items-center justify-center py-16 text-center">
 	{#if icon}
-		<svelte:component this={icon} size={48} class="text-surface-600 mb-4" weight="duotone" />
+		{@const EmptyIcon = icon}
+		<EmptyIcon size={48} class="text-surface-600 mb-4" weight="duotone" />
 	{/if}
 	<h3 class="text-lg font-medium text-surface-300">{title}</h3>
 	<p class="mt-1 text-sm text-surface-500 max-w-sm">{description}</p>
