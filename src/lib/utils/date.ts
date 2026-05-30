@@ -5,6 +5,8 @@ import {
 	isYesterday,
 	isThisWeek,
 	isThisMonth,
+	startOfDay,
+	endOfDay,
 	startOfWeek,
 	endOfWeek,
 	startOfMonth,
@@ -67,9 +69,10 @@ export function getMonthRange(): { start: number; end: number } {
 
 export function getTodayRange(): { start: number; end: number } {
 	const now = new Date();
-	const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-	const end = start + 86400000; // 24 hours in ms
-	return { start, end };
+	return {
+		start: startOfDay(now).getTime(),
+		end: endOfDay(now).getTime()
+	};
 }
 
 export function getLast7DaysRange(): { start: number; end: number } {

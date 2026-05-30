@@ -1,5 +1,5 @@
 import { db } from '$lib/db';
-import { indexCourse, removeCourseFromIndex } from '$lib/db/search';
+import { indexCourse, removeCourseFromIndex, removeNoteFromIndex } from '$lib/db/search';
 import type { Course, CourseType, CourseStatus, CourseProvider } from '$lib/types';
 
 export const courseRepo = {
@@ -75,15 +75,22 @@ export const courseRepo = {
 
 	async remove(id: number): Promise<void> {
 		removeCourseFromIndex(id);
-		await db.transaction('rw', [db.courses, db.notes, db.tasks, db.sources, db.modules, db.sessions], async () => {
+		await db.transaction('rw', [db.courses, db.notes, db.noteVersions, db.noteLinks, db.noteTagJoins, db.tasks, db.sources, db.modules, db.sessions], async () => {
+			const courseNotes = await db.notes.where('courseId').equals(id).toArray();
+			for (const note of courseNotes) {
+				if (!note.id) continue;
+				removeNoteFromIndex(note.id);
+				await db.noteVersions.where('noteId').equals(note.id).delete();
+				await db.noteLinks.where('sourceNoteId').equals(note.id).delete();
+				await db.noteLinks.where('targetNoteId').equals(note.id).delete();
+				await db.noteTagJoins.where('noteId').equals(note.id).delete();
+				await db.sources.where('noteId').equals(note.id).delete();
+			}
 			await db.notes.where('courseId').equals(id).delete();
 			await db.tasks.where('courseId').equals(id).delete();
 			await db.sources.where('courseId').equals(id).delete();
 			await db.modules.where('courseId').equals(id).delete();
-			const sessions = await db.sessions.where('courseId').equals(id).toArray();
-			for (const session of sessions) {
-				if (session.id) await db.sessions.delete(session.id);
-			}
+			await db.sessions.where('courseId').equals(id).delete();
 			await db.courses.delete(id);
 		});
 	},

@@ -34,75 +34,70 @@ export const tagRepo = {
 	},
 
 	async rename(oldName: string, newName: string): Promise<void> {
-		const tag = await db.tags.where('name').equals(oldName.toLowerCase()).first();
+		const normalizedOld = oldName.toLowerCase();
+		const normalizedNew = newName.toLowerCase().trim();
+		if (normalizedOld === normalizedNew) return;
+
+		const tag = await db.tags.where('name').equals(normalizedOld).first();
 		if (!tag?.id) return;
 
-		const normalizedNew = newName.toLowerCase().trim();
-		await db.tags.update(tag.id, { name: normalizedNew });
+		await db.transaction('rw', [db.tags, db.notes, db.courses], async () => {
+			await db.tags.update(tag.id!, { name: normalizedNew });
 
-		// Update all notes that have this tag
-		const notes = await db.notes.toArray();
-		for (const note of notes) {
-			if (note.tags.includes(oldName.toLowerCase())) {
-				const newTags = note.tags.map((t) => (t === oldName.toLowerCase() ? normalizedNew : t));
+			const notes = await db.notes.where('tags').equals(normalizedOld).toArray();
+			for (const note of notes) {
+				const newTags = note.tags.map((t) => (t === normalizedOld ? normalizedNew : t));
 				if (note.id) await db.notes.update(note.id, { tags: newTags });
 			}
-		}
 
-		// Update all courses that have this tag
-		const courses = await db.courses.toArray();
-		for (const course of courses) {
-			if (course.tags.includes(oldName.toLowerCase())) {
-				const newTags = course.tags.map((t) => (t === oldName.toLowerCase() ? normalizedNew : t));
+			const courses = await db.courses.where('tags').equals(normalizedOld).toArray();
+			for (const course of courses) {
+				const newTags = course.tags.map((t) => (t === normalizedOld ? normalizedNew : t));
 				if (course.id) await db.courses.update(course.id, { tags: newTags });
 			}
-		}
+		});
 	},
 
 	async merge(sourceNames: string[], targetName: string): Promise<void> {
 		const normalizedTarget = targetName.toLowerCase().trim();
 
-		// Ensure target tag exists
 		await this.getOrCreate(normalizedTarget);
 
-		for (const sourceName of sourceNames) {
-			const normalized = sourceName.toLowerCase().trim();
-			if (normalized === normalizedTarget) continue;
+		await db.transaction('rw', [db.tags, db.notes], async () => {
+			for (const sourceName of sourceNames) {
+				const normalized = sourceName.toLowerCase().trim();
+				if (normalized === normalizedTarget) continue;
 
-			// Replace in notes
-			const notes = await db.notes.toArray();
-			for (const note of notes) {
-				if (note.tags.includes(normalized)) {
+				const notes = await db.notes.where('tags').equals(normalized).toArray();
+				for (const note of notes) {
 					let newTags = note.tags.filter((t) => t !== normalized);
 					if (!newTags.includes(normalizedTarget)) {
 						newTags.push(normalizedTarget);
 					}
 					if (note.id) await db.notes.update(note.id, { tags: newTags });
 				}
-			}
 
-			// Delete source tag
-			const sourceTag = await db.tags.where('name').equals(normalized).first();
-			if (sourceTag?.id) await db.tags.delete(sourceTag.id);
-		}
+				const sourceTag = await db.tags.where('name').equals(normalized).first();
+				if (sourceTag?.id) await db.tags.delete(sourceTag.id);
+			}
+		});
 	},
 
 	async remove(id: number): Promise<void> {
 		const tag = await db.tags.get(id);
 		if (!tag) return;
 
-		// Remove from all notes
-		const notes = await db.notes.toArray();
-		for (const note of notes) {
-			if (note.tags.includes(tag.name)) {
+		await db.transaction('rw', [db.tags, db.notes, db.noteTagJoins, db.courseTagJoins], async () => {
+			const notes = await db.notes.where('tags').equals(tag.name).toArray();
+			for (const note of notes) {
 				const newTags = note.tags.filter((t) => t !== tag.name);
 				if (note.id) await db.notes.update(note.id, { tags: newTags });
 			}
-		}
 
-		await db.noteTagJoins.where('tagId').equals(id).delete();
-		await db.courseTagJoins.where('tagId').equals(id).delete();
-		await db.tags.delete(id);
+			await db.noteTagJoins.where('tagId').equals(id).delete();
+			await db.courseTagJoins.where('tagId').equals(id).delete();
+			await db.tags.delete(id);
+		});
 	},
 
 	async getNoteCounts(): Promise<Map<string, number>> {

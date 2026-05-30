@@ -23,6 +23,8 @@
 
 	let backdrop = $state<HTMLElement | undefined>(undefined);
 	let panel = $state<HTMLElement | undefined>(undefined);
+	let titleId = `modal-title-${Math.random().toString(36).slice(2, 8)}`;
+	let previousActiveElement: HTMLElement | null = null;
 
 	const sizeClasses = {
 		sm: 'max-w-sm',
@@ -33,11 +35,20 @@
 
 	$effect(() => {
 		if (!open || !backdrop || !panel) return;
+
+		previousActiveElement = document.activeElement as HTMLElement;
 		const t1 = gsap.fromTo(backdrop, { opacity: 0 }, { opacity: 1, duration: 0.2 });
 		const t2 = gsap.fromTo(panel, { opacity: 0, scale: 0.95, y: 10 }, { opacity: 1, scale: 1, y: 0, duration: 0.25, ease: 'back.out(1.5)' });
+
+		const firstFocusable = panel.querySelector<HTMLElement>(
+			'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+		);
+		requestAnimationFrame(() => firstFocusable?.focus());
+
 		return () => {
 			t1?.kill();
 			t2?.kill();
+			previousActiveElement?.focus();
 		};
 	});
 
@@ -46,7 +57,25 @@
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') onclose();
+		if (e.key === 'Escape') {
+			onclose();
+			return;
+		}
+		if (e.key === 'Tab' && panel) {
+			const focusable = panel.querySelectorAll<HTMLElement>(
+				'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+			);
+			if (focusable.length === 0) return;
+			const first = focusable[0];
+			const last = focusable[focusable.length - 1];
+			if (e.shiftKey && document.activeElement === first) {
+				e.preventDefault();
+				last.focus();
+			} else if (!e.shiftKey && document.activeElement === last) {
+				e.preventDefault();
+				first.focus();
+			}
+		}
 	}
 </script>
 
@@ -62,11 +91,14 @@
 	>
 		<div
 			bind:this={panel}
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby={title ? titleId : undefined}
 			class="w-full {sizeClasses[size]} rounded-xl border border-surface-700 bg-surface-900 shadow-2xl"
 		>
 			{#if title}
 				<div class="flex items-center justify-between border-b border-surface-700 px-5 py-4">
-					<h2 class="text-lg font-semibold text-surface-100">{title}</h2>
+					<h2 id={titleId} class="text-lg font-semibold text-surface-100">{title}</h2>
 					<button
 						type="button"
 						aria-label="Close modal"

@@ -25,7 +25,13 @@
 </script>
 
 <div class="flex items-center gap-2">
-	<div class="flex-1 rounded-full bg-surface-800 {sizeClasses[size]} overflow-hidden">
+	<div
+		role="progressbar"
+		aria-valuenow={Math.round(pct)}
+		aria-valuemin={0}
+		aria-valuemax={100}
+		class="flex-1 rounded-full bg-surface-800 {sizeClasses[size]} overflow-hidden"
+	>
 		<div
 			class="rounded-full {colorClasses[color]} {sizeClasses[size]} transition-all duration-500"
 			style="width: {pct}%"

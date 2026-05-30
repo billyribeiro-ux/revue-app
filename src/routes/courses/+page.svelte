@@ -67,26 +67,31 @@
 
 	async function createCourse() {
 		if (!newTitle.trim()) return;
-		let workspaceId = appState.activeWorkspaceId;
-		if (!workspaceId) {
-			const first = await db.workspaces.orderBy('createdAt').first();
-			workspaceId = first?.id ?? 1;
+		try {
+			let workspaceId = appState.activeWorkspaceId;
+			if (!workspaceId) {
+				const first = await db.workspaces.orderBy('createdAt').first();
+				workspaceId = first?.id ?? 1;
+			}
+			const id = await courseRepo.create({
+				workspaceId,
+				title: newTitle.trim(),
+				type: newType,
+				provider: (newProvider || '') as import('$lib/types').CourseProvider,
+				description: newDescription
+			});
+			addToast('success', `Course "${newTitle}" created`);
+			showNewModal = false;
+			newTitle = '';
+			newType = 'course';
+			newProvider = '';
+			newDescription = '';
+			await loadCourses();
+			goto(`/courses/${id}`);
+		} catch (err) {
+			console.error('Failed to create course:', err);
+			addToast('error', 'Failed to create course');
 		}
-		const id = await courseRepo.create({
-			workspaceId,
-			title: newTitle.trim(),
-			type: newType,
-			provider: (newProvider || '') as import('$lib/types').CourseProvider,
-			description: newDescription
-		});
-		addToast('success', `Course "${newTitle}" created`);
-		showNewModal = false;
-		newTitle = '';
-		newType = 'course';
-		newProvider = '';
-		newDescription = '';
-		await loadCourses();
-		goto(`/courses/${id}`);
 	}
 
 	const statusColors: Record<string, 'green' | 'yellow' | 'brand' | 'default'> = {

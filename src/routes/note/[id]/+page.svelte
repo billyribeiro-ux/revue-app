@@ -27,6 +27,7 @@
 	import type { Note, Course, NoteVersion } from '$lib/types';
 
 	let noteId = $derived(Number(page.params.id));
+	let invalidId = $derived(Number.isNaN(noteId) || noteId <= 0);
 	let note = $state<Note | null>(null);
 	let course = $state<Course | null>(null);
 	let versions = $state<NoteVersion[]>([]);
@@ -40,11 +41,10 @@
 	let appState = $derived(getAppState());
 
 	$effect(() => {
-		if (isDbReady()) {
-			loadNote(noteId).catch((err) => {
-				console.error('Failed to load note:', err);
-			});
-		}
+		if (invalidId || !isDbReady()) return;
+		loadNote(noteId).catch((err) => {
+			console.error('Failed to load note:', err);
+		});
 	});
 
 	async function loadNote(id: number) {
@@ -255,9 +255,13 @@
 	{#if showVersions}
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<!-- svelte-ignore a11y_interactive_supports_focus -->
 		<div
 			class="fixed inset-0 z-50 flex items-center justify-end bg-black/40"
 			onclick={() => (showVersions = false)}
+			role="dialog"
+			aria-modal="true"
+			aria-label="Version History"
 		>
 			<div
 				class="h-full w-80 bg-surface-900 border-l border-surface-700 p-5 overflow-y-auto"
@@ -292,8 +296,9 @@
 		</div>
 	{/if}
 {:else}
-	<div class="flex h-full items-center justify-center">
-		<p class="text-surface-500">Note not found</p>
+	<div class="flex h-full flex-col items-center justify-center gap-3">
+		<p class="text-surface-500">{invalidId ? 'Invalid note ID' : 'Note not found'}</p>
+		<a href="/library" class="text-sm text-brand-400 hover:text-brand-300 transition-colors">Back to Library</a>
 	</div>
 {/if}
 

@@ -48,35 +48,50 @@
 
 	async function quickCapture() {
 		if (!newContent.trim()) return;
-		await inboxRepo.create({
-			content: newContent.trim(),
-			tags: [],
-			courseId: null
-		});
-		newContent = '';
-		addToast('success', 'Captured to inbox');
-		await loadData();
+		try {
+			await inboxRepo.create({
+				content: newContent.trim(),
+				tags: [],
+				courseId: null
+			});
+			newContent = '';
+			addToast('success', 'Captured to inbox');
+			await loadData();
+		} catch (err) {
+			console.error('Failed to capture:', err);
+			addToast('error', 'Failed to capture item');
+		}
 	}
 
 	async function convertToNote(item: InboxItem, type: NoteType = 'general') {
-		const template = noteTemplates.find((t) => t.type === type);
-		const id = await noteRepo.create({
-			title: item.content.substring(0, 60),
-			noteType: type,
-			body: template?.defaultBody ? `<p>${item.content}</p>${template.defaultBody}` : `<p>${item.content}</p>`,
-			courseId: item.courseId,
-			workspaceId: appState.activeWorkspaceId,
-			tags: item.tags
-		});
-		await inboxRepo.remove(item.id!);
-		await loadData();
-		goto(`/note/${id}`);
+		try {
+			const template = noteTemplates.find((t) => t.type === type);
+			const id = await noteRepo.create({
+				title: item.content.substring(0, 60),
+				noteType: type,
+				body: template?.defaultBody ? `<p>${item.content}</p>${template.defaultBody}` : `<p>${item.content}</p>`,
+				courseId: item.courseId,
+				workspaceId: appState.activeWorkspaceId,
+				tags: item.tags
+			});
+			await inboxRepo.remove(item.id!);
+			await loadData();
+			goto(`/note/${id}`);
+		} catch (err) {
+			console.error('Failed to convert to note:', err);
+			addToast('error', 'Failed to convert item to note');
+		}
 	}
 
 	async function deleteItem(id: number) {
-		await inboxRepo.remove(id);
-		await loadData();
-		addToast('info', 'Item removed from inbox');
+		try {
+			await inboxRepo.remove(id);
+			await loadData();
+			addToast('info', 'Item removed from inbox');
+		} catch (err) {
+			console.error('Failed to delete item:', err);
+			addToast('error', 'Failed to delete item');
+		}
 	}
 </script>
 
@@ -111,6 +126,7 @@
 					<div class="flex items-start justify-between">
 						<p class="text-sm text-surface-200 flex-1">{item.content}</p>
 						<button
+							aria-label="Delete inbox item"
 							onclick={() => deleteItem(item.id!)}
 							class="ml-3 rounded p-1 text-surface-500 hover:text-accent-red hover:bg-accent-red/10 transition-colors shrink-0"
 						>

@@ -93,6 +93,15 @@ export async function openFile(
 					resolve(null);
 				}
 			};
+			// Resolve null on cancel — file dialogs don't fire onchange when cancelled,
+			// so we listen for window focus returning after the dialog closes
+			const onFocus = () => {
+				setTimeout(() => {
+					if (!input.files?.length) resolve(null);
+				}, 300);
+				window.removeEventListener('focus', onFocus);
+			};
+			window.addEventListener('focus', onFocus);
 			input.click();
 		});
 	}

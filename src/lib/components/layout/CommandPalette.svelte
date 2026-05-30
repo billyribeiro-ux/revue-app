@@ -235,10 +235,12 @@
 			</div>
 
 			<!-- Results -->
-			<div class="max-h-80 overflow-y-auto py-2">
+			<div class="max-h-80 overflow-y-auto py-2" role="listbox" aria-label="Command results">
 				{#each displayItems as item, i}
-					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					<div
+						role="option"
+						tabindex="-1"
+						aria-selected={i === selectedIndex}
 						class="flex cursor-pointer items-center gap-3 px-4 py-2.5 transition-colors
 							{i === selectedIndex ? 'bg-surface-800' : 'hover:bg-surface-800/50'}"
 						onclick={item.action}

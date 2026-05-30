@@ -33,6 +33,7 @@
 	import type { Course, Note, Task, Module, CourseType, CourseStatus, CourseProvider } from '$lib/types';
 
 	let courseId = $derived(Number(page.params.id));
+	let invalidId = $derived(Number.isNaN(courseId) || courseId <= 0);
 	let course = $state<Course | null>(null);
 	let notes = $state<Note[]>([]);
 	let pinnedNotes = $state<Note[]>([]);
@@ -50,11 +51,10 @@
 	let container = $state<HTMLElement | undefined>();
 
 	$effect(() => {
-		if (isDbReady()) {
-			loadCourse(courseId).catch((err) => {
-				console.error('Failed to load course:', err);
-			});
-		}
+		if (invalidId || !isDbReady()) return;
+		loadCourse(courseId).catch((err) => {
+			console.error('Failed to load course:', err);
+		});
 	});
 
 	$effect(() => {
@@ -77,18 +77,28 @@
 	}
 
 	async function createNote() {
-		const id = await noteRepo.create({
-			courseId,
-			workspaceId: course?.workspaceId,
-			title: 'Untitled Note'
-		});
-		goto(`/note/${id}`);
+		try {
+			const id = await noteRepo.create({
+				courseId,
+				workspaceId: course?.workspaceId,
+				title: 'Untitled Note'
+			});
+			goto(`/note/${id}`);
+		} catch (err) {
+			console.error('Failed to create note:', err);
+			addToast('error', 'Failed to create note');
+		}
 	}
 
 	async function deleteCourse() {
-		await courseRepo.remove(courseId);
-		addToast('success', 'Course deleted');
-		goto('/courses');
+		try {
+			await courseRepo.remove(courseId);
+			addToast('success', 'Course deleted');
+			goto('/courses');
+		} catch (err) {
+			console.error('Failed to delete course:', err);
+			addToast('error', 'Failed to delete course');
+		}
 	}
 
 	function openEditModal() {
@@ -104,26 +114,36 @@
 	}
 
 	async function saveCourseEdit() {
-		if (!course?.id) return;
-		await courseRepo.update(course.id, {
-			title: editTitle.trim(),
-			description: editDescription.trim(),
-			type: editType,
-			status: editStatus,
-			provider: editProvider || ('' as CourseProvider),
-			tags: editTags.split(',').map((t) => t.trim()).filter(Boolean)
-		});
-		await loadCourse(courseId);
-		showEditModal = false;
-		addToast('success', 'Course updated');
+		if (!course?.id || !editTitle.trim()) return;
+		try {
+			await courseRepo.update(course.id, {
+				title: editTitle.trim(),
+				description: editDescription.trim(),
+				type: editType,
+				status: editStatus,
+				provider: editProvider || ('' as CourseProvider),
+				tags: editTags.split(',').map((t) => t.trim()).filter(Boolean)
+			});
+			await loadCourse(courseId);
+			showEditModal = false;
+			addToast('success', 'Course updated');
+		} catch (err) {
+			console.error('Failed to update course:', err);
+			addToast('error', 'Failed to update course');
+		}
 	}
 
 	async function exportCourse() {
 		if (!course?.id) return;
-		const md = await courseToMarkdown(course.id);
-		const safeTitle = course.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
-		await downloadFile(md, `${safeTitle}.md`, 'text/markdown');
-		addToast('success', 'Course exported');
+		try {
+			const md = await courseToMarkdown(course.id);
+			const safeTitle = course.title.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+			await downloadFile(md, `${safeTitle}.md`, 'text/markdown');
+			addToast('success', 'Course exported');
+		} catch (err) {
+			console.error('Failed to export course:', err);
+			addToast('error', 'Failed to export course');
+		}
 	}
 
 	let completedModules = $derived(modules.filter((m) => m.completed).length);
@@ -350,8 +370,9 @@
 		</div>
 	</div>
 {:else}
-	<div class="flex h-full items-center justify-center">
-		<p class="text-surface-500">Course not found</p>
+	<div class="flex h-full flex-col items-center justify-center gap-3">
+		<p class="text-surface-500">{invalidId ? 'Invalid course ID' : 'Course not found'}</p>
+		<a href="/courses" class="text-sm text-brand-400 hover:text-brand-300 transition-colors">Back to Courses</a>
 	</div>
 {/if}
 

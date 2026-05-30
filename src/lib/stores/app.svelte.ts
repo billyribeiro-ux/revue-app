@@ -69,6 +69,8 @@ export function toggleFocusMode(): void {
 }
 
 // Toast notifications
+const toastTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
 export function getToasts(): ToastMessage[] {
 	return toasts;
 }
@@ -77,10 +79,15 @@ export function addToast(type: ToastMessage['type'], message: string, duration: 
 	const id = generateId();
 	toasts.push({ id, type, message, duration });
 	if (duration > 0) {
-		setTimeout(() => removeToast(id), duration);
+		toastTimers.set(id, setTimeout(() => removeToast(id), duration));
 	}
 }
 
 export function removeToast(id: string): void {
+	const timer = toastTimers.get(id);
+	if (timer) {
+		clearTimeout(timer);
+		toastTimers.delete(id);
+	}
 	toasts = toasts.filter((t) => t.id !== id);
 }

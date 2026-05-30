@@ -29,15 +29,17 @@
 	};
 </script>
 
-<div class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
+<div class="fixed bottom-4 right-4 z-[100] flex flex-col gap-2" aria-live="polite" aria-atomic="false">
 	{#each toasts as toast (toast.id)}
 		{@const ToastIcon = iconMap[toast.type]}
 		<div
+			role={toast.type === 'error' ? 'alert' : 'status'}
 			class="flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg backdrop-blur-sm {colorMap[toast.type]}"
 		>
 			<ToastIcon size={20} class={textColorMap[toast.type]} weight="fill" />
 			<span class="text-sm text-surface-200">{toast.message}</span>
 			<button
+				aria-label="Dismiss notification"
 				onclick={() => removeToast(toast.id)}
 				class="ml-2 rounded p-0.5 text-surface-400 hover:text-surface-200 transition-colors"
 			>

@@ -116,9 +116,12 @@
 		<!-- Courses section -->
 		<div class="mt-6">
 			<div class="flex w-full items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-surface-500 hover:text-surface-300">
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<span class="cursor-pointer" onclick={() => (coursesExpanded = !coursesExpanded)}>Courses</span>
+				<button
+					class="cursor-pointer bg-transparent border-none p-0 text-xs font-semibold uppercase tracking-wider text-inherit"
+					onclick={() => (coursesExpanded = !coursesExpanded)}
+					aria-expanded={coursesExpanded}
+					aria-label="Toggle courses section"
+				>Courses</button>
 				<div class="flex items-center gap-1">
 					<button
 						onclick={() => goto('/courses?new=true')}
@@ -127,7 +130,7 @@
 					>
 						<PlusIcon size={14} />
 					</button>
-					<button onclick={() => (coursesExpanded = !coursesExpanded)} aria-label="Toggle courses">
+					<button onclick={() => (coursesExpanded = !coursesExpanded)} aria-expanded={coursesExpanded} aria-label="Toggle courses">
 						{#if coursesExpanded}
 							<CaretDownIcon size={12} />
 						{:else}
@@ -162,6 +165,7 @@
 		<div class="mt-6">
 			<button
 				onclick={() => (favoritesExpanded = !favoritesExpanded)}
+				aria-expanded={favoritesExpanded}
 				class="flex w-full items-center justify-between px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-surface-500 hover:text-surface-300"
 			>
 				<span>Favorites</span>

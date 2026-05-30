@@ -109,10 +109,13 @@ export async function search(query: string, limit: number = 20): Promise<SearchR
 	const results: SearchResult[] = [];
 
 	const noteIds = noteIndex.search(query, { limit }) as number[];
-	for (const id of noteIds) {
-		const doc = noteStore.get(id);
-		if (doc) {
-			const note = await db.notes.get(id);
+	const matchedNoteDocs = noteIds.map((id) => ({ id, doc: noteStore.get(id) })).filter((n) => n.doc);
+	if (matchedNoteDocs.length > 0) {
+		const noteRecords = await db.notes.where('id').anyOf(matchedNoteDocs.map((n) => n.id)).toArray();
+		const noteMap = new Map(noteRecords.map((n) => [n.id, n]));
+		for (const { id, doc } of matchedNoteDocs) {
+			if (!doc) continue;
+			const note = noteMap.get(id);
 			results.push({
 				type: 'note',
 				id,
@@ -126,10 +129,13 @@ export async function search(query: string, limit: number = 20): Promise<SearchR
 	}
 
 	const courseIds = courseIndex.search(query, { limit: 5 }) as number[];
-	for (const id of courseIds) {
-		const doc = courseStore.get(id);
-		if (doc) {
-			const course = await db.courses.get(id);
+	const matchedCourseDocs = courseIds.map((id) => ({ id, doc: courseStore.get(id) })).filter((c) => c.doc);
+	if (matchedCourseDocs.length > 0) {
+		const courseRecords = await db.courses.where('id').anyOf(matchedCourseDocs.map((c) => c.id)).toArray();
+		const courseMap = new Map(courseRecords.map((c) => [c.id, c]));
+		for (const { id, doc } of matchedCourseDocs) {
+			if (!doc) continue;
+			const course = courseMap.get(id);
 			results.push({
 				type: 'course',
 				id,
@@ -141,9 +147,8 @@ export async function search(query: string, limit: number = 20): Promise<SearchR
 		}
 	}
 
-	// Also search tags
-	const tags = await db.tags.toArray();
 	const lowerQuery = query.toLowerCase();
+	const tags = await db.tags.toArray();
 	for (const tag of tags) {
 		if (tag.name.includes(lowerQuery) && tag.id) {
 			results.push({

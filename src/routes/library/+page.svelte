@@ -123,15 +123,19 @@
 	<div class="flex items-center justify-between mb-6">
 		<h1 class="text-2xl font-bold text-surface-100">Library</h1>
 		<div class="flex items-center gap-2">
-			<div class="flex items-center border border-surface-700 rounded-lg">
+			<div class="flex items-center border border-surface-700 rounded-lg" role="group" aria-label="View mode">
 				<button
 					onclick={() => (viewMode = 'grid')}
+					aria-label="Grid view"
+					aria-pressed={viewMode === 'grid'}
 					class="p-2 transition-colors rounded-l-lg {viewMode === 'grid' ? 'bg-surface-700 text-surface-100' : 'text-surface-400 hover:text-surface-200'}"
 				>
 					<GridFourIcon size={16} />
 				</button>
 				<button
 					onclick={() => (viewMode = 'list')}
+					aria-label="List view"
+					aria-pressed={viewMode === 'list'}
 					class="p-2 transition-colors rounded-r-lg {viewMode === 'list' ? 'bg-surface-700 text-surface-100' : 'text-surface-400 hover:text-surface-200'}"
 				>
 					<ListIcon size={16} />
@@ -172,6 +176,7 @@
 		{#if filterTag}
 			<button
 				onclick={() => { filterTag = ''; goto('/library'); }}
+				aria-label="Clear tag filter: {filterTag}"
 				class="flex items-center gap-1.5 rounded-lg border border-brand-600 bg-brand-500/10 px-3 py-2 text-sm text-brand-400 hover:bg-brand-500/20 transition-colors"
 			>
 				<TagIcon size={14} />
